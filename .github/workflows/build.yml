@@ -15,43 +15,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Set up Python (x64)
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        architecture: 'x64'
-    
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~\AppData\Local\pip\Cache
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
     
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install PyQt6 Pillow reportlab pyinstaller
     
-    - name: Verify Python architecture
-      run: |
-        python -c "import platform; print(f'Architecture: {platform.machine()}')"
-        python -c "import struct; print(f'Bits: {struct.calcsize(\"P\") * 8}')"
-    
     - name: Build EXE with PyInstaller
-      run: |
-        pyinstaller --onefile --windowed --name UF_Print_Cards --clean main.py
-    
-    - name: Verify EXE exists
-      run: |
-        if (Test-Path "dist\UF_Print_Cards.exe") {
-          Write-Host "EXE file created successfully"
-          Get-Item "dist\UF_Print_Cards.exe" | Select-Object Name, Length
-        } else {
-          Write-Error "EXE file not found"
-          exit 1
-        }
+      run: pyinstaller --onefile --windowed --name UF_Print_Cards main.py
     
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -59,17 +34,3 @@ jobs:
         name: UF_Print_Cards_Windows_x64
         path: dist/UF_Print_Cards.exe
         retention-days: 30
-    
-    - name: Create release info
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      run: |
-        echo "Build completed on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" > build_info.txt
-        echo "Commit: ${{ github.sha }}" >> build_info.txt
-        echo "Runner: ${{ runner.os }}" >> build_info.txt
-    
-    - name: Upload build info
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      uses: actions/upload-artifact@v4
-      with:
-        name: build_info
-        path: build_info.txt
