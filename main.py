@@ -28,15 +28,24 @@ logging.basicConfig(
 )
 
 def pillow_to_qpixmap(pil_img):
-    """Convert PIL Image to QPixmap using byte buffer (PyInstaller-safe)"""
+    """Convert PIL Image to QPixmap using raw data (fast, no compression)"""
     try:
-        byte_arr = io.BytesIO()
-        pil_img.save(byte_arr, format='PNG')
-        byte_data = byte_arr.getvalue()
-        qimg = QImage.fromData(byte_data)
+        # Convert to RGBA if needed
+        if pil_img.mode != "RGBA":
+            pil_img = pil_img.convert("RGBA")
+        
+        # Get raw pixel bytes without PNG compression
+        data = pil_img.tobytes("raw", "RGBA")
+        
+        # Create QImage directly from memory
+        qimg = QImage(data, pil_img.size[0], pil_img.size[1], QImage.Format_RGBA8888)
+        
+        # Important: keep reference to data to prevent Qt crash
+        qimg.bits().setsize(pil_img.size[0] * pil_img.size[1] * 4)
+        
         return QPixmap.fromImage(qimg)
     except Exception as e:
-        logging.error(f"Error converting PIL to QPixmap: {e}")
+        logging.error(f"Error converting PIL to QPixmap: {e}", exc_info=True)
         return None
 
 # Database setup
