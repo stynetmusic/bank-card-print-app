@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import sqlite3
+import logging
 from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QFileDialog, 
@@ -10,10 +11,20 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QSlider, QComboBox, QCheckBox, QSpinBox, QDialog,
                              QDialogButtonBox, QTableWidget, QTableWidgetItem,
                              QHeaderView, QFrame)
-from PyQt5.QtCore import Qt, QSize, QTimer, QRect
-from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont
+from PyQt5.QtCore import Qt, QSize, QTimer, QRect, QPoint
+from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont, QCursor
 from PIL import Image, ImageDraw, ImageQt
 import io
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log'),
+        logging.StreamHandler()
+    ]
+)
 
 # Database setup
 DB_NAME = "card_printing.db"
@@ -43,22 +54,48 @@ class ImageEditor(QWidget):
         super().__init__(parent)
         self.image = None
         self.original_image = None
-        self.current_mode = "view"  # view, stretch, shrink, eraser
+        self.base_image = None  # For CMYK reset
+        self.current_mode = "view"  # view, move, eraser
         self.eraser_size = 20
         self.cmyk_values = {"C": 0, "M": 0, "Y": 0, "K": 0}
         self.scale_factor = 1.0
+        self.offset_x = 0
+        self.offset_y = 0
+        self.dragging = False
+        self.last_mouse_pos = QPoint()
         self.setMouseTracking(True)
         self.setMinimumSize(348, 224)  # 87x56mm at 100 DPI
         self.setStyleSheet("background-color: #f0f0f0; border: 2px solid #00ff00;")
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         
     def load_image(self, path):
         try:
-            self.original_image = Image.open(path).convert("RGBA")
+            logging.info(f"Attempting to load image: {path}")
+            
+            if not os.path.exists(path):
+                logging.error(f"File does not exist: {path}")
+                return False
+            
+            # Try loading with PIL
+            img = Image.open(path)
+            logging.info(f"Image loaded successfully: {img.size}, mode: {img.mode}")
+            
+            # Convert to RGBA
+            self.original_image = img.convert("RGBA")
+            self.base_image = self.original_image.copy()
             self.image = self.original_image.copy()
+            
+            # Reset position
+            self.offset_x = 0
+            self.offset_y = 0
+            self.scale_factor = 1.0
+            
             self.update()
+            logging.info("Image displayed successfully")
             return True
+            
         except Exception as e:
-            print(f"Error loading image: {e}")
+            logging.error(f"Error loading image: {e}", exc_info=True)
             return False
     
     def paintEvent(self, event):
@@ -66,96 +103,171 @@ class ImageEditor(QWidget):
         painter.fillRect(self.rect(), QColor(240, 240, 240))
         
         if self.image:
-            # Scale image to fit widget while maintaining aspect ratio
             img_width, img_height = self.image.size
             widget_width = self.width()
             widget_height = self.height()
             
-            scale_x = widget_width / img_width
-            scale_y = widget_height / img_height
-            self.scale_factor = min(scale_x, scale_y)
+            # Calculate display size with scale factor
+            display_width = int(img_width * self.scale_factor)
+            display_height = int(img_height * self.scale_factor)
             
-            new_width = int(img_width * self.scale_factor)
-            new_height = int(img_height * self.scale_factor)
+            # Calculate position with offset
+            x = (widget_width - display_width) // 2 + self.offset_x
+            y = (widget_height - display_height) // 2 + self.offset_y
             
-            # Center the image
-            x = (widget_width - new_width) // 2
-            y = (widget_height - new_height) // 2
+            # Draw image
+            try:
+                qimage = ImageQt.ImageQt(self.image)
+                pixmap = QPixmap.fromImage(qimage)
+                painter.drawPixmap(x, y, pixmap.scaled(display_width, display_height, Qt.AspectRatioMode.KeepAspectRatio))
+            except Exception as e:
+                logging.error(f"Error drawing image: {e}")
+                painter.setPen(QPen(QColor(255, 0, 0), 2))
+                painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Ошибка отображения")
             
-            qimage = ImageQt.ImageQt(self.image)
-            pixmap = QPixmap.fromImage(qimage)
-            painter.drawPixmap(x, y, pixmap.scaled(new_width, new_height, Qt.AspectRatioMode.KeepAspectRatio))
+            # Draw eraser cursor if in eraser mode
+            if self.current_mode == "eraser":
+                painter.setPen(QPen(QColor(255, 0, 0), 2))
+                painter.setBrush(QBrush(QColor(255, 0, 0, 50)))
+                cursor_size = self.eraser_size * 2
+                painter.drawEllipse(self.last_mouse_pos.x() - cursor_size//2, 
+                                   self.last_mouse_pos.y() - cursor_size//2, 
+                                   cursor_size, cursor_size)
         else:
             painter.setPen(QPen(QColor(150, 150, 150), 2))
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Загрузите изображение\n(87x56mm)")
     
     def mousePressEvent(self, event):
-        if self.current_mode == "eraser" and self.image:
-            self.apply_eraser(event.position())
+        if not self.image:
+            return
+            
+        if self.current_mode == "eraser":
+            self.apply_eraser(event.pos())
+        elif self.current_mode == "move":
+            self.dragging = True
+            self.last_mouse_pos = event.pos()
+            self.setCursor(QCursor(Qt.CursorShape.ClosedHandCursor))
     
     def mouseMoveEvent(self, event):
-        if self.current_mode == "eraser" and event.buttons() & Qt.MouseButton.LeftButton and self.image:
-            self.apply_eraser(event.position())
+        self.last_mouse_pos = event.pos()
+        
+        if not self.image:
+            return
+            
+        if self.current_mode == "eraser" and event.buttons() & Qt.MouseButton.LeftButton:
+            self.apply_eraser(event.pos())
+        elif self.current_mode == "move" and self.dragging:
+            delta = event.pos() - self.last_mouse_pos
+            self.offset_x += delta.x()
+            self.offset_y += delta.y()
+            self.last_mouse_pos = event.pos()
+            self.update()
+        
+        # Update eraser cursor
+        if self.current_mode == "eraser":
+            self.update()
+    
+    def mouseReleaseEvent(self, event):
+        if self.current_mode == "move":
+            self.dragging = False
+            self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
+    
+    def keyPressEvent(self, event):
+        if not self.image:
+            return
+            
+        key = event.key()
+        step = 10
+        
+        if key == Qt.Key.Key_Left:
+            self.offset_x -= step
+        elif key == Qt.Key.Key_Right:
+            self.offset_x += step
+        elif key == Qt.Key.Key_Up:
+            self.offset_y -= step
+        elif key == Qt.Key.Key_Down:
+            self.offset_y += step
+        else:
+            return
+            
+        self.update()
     
     def apply_eraser(self, pos):
         if not self.image:
             return
             
-        img_width, img_height = self.image.size
-        widget_width = self.width()
-        widget_height = self.height()
-        
-        # Convert widget coordinates to image coordinates
-        x = int((pos.x() - (widget_width - img_width * self.scale_factor) // 2) / self.scale_factor)
-        y = int((pos.y() - (widget_height - img_height * self.scale_factor) // 2) / self.scale_factor)
-        
-        if 0 <= x < img_width and 0 <= y < img_height:
-            draw = ImageDraw.Draw(self.image)
-            eraser_radius = self.eraser_size
-            bbox = [x - eraser_radius, y - eraser_radius, x + eraser_radius, y + eraser_radius]
-            draw.ellipse(bbox, fill=(0, 0, 0, 0))
-            self.update()
+        try:
+            img_width, img_height = self.image.size
+            widget_width = self.width()
+            widget_height = self.height()
+            
+            display_width = int(img_width * self.scale_factor)
+            display_height = int(img_height * self.scale_factor)
+            
+            # Calculate image position
+            base_x = (widget_width - display_width) // 2 + self.offset_x
+            base_y = (widget_height - display_height) // 2 + self.offset_y
+            
+            # Convert widget coordinates to image coordinates
+            x = int((pos.x() - base_x) / self.scale_factor)
+            y = int((pos.y() - base_y) / self.scale_factor)
+            
+            if 0 <= x < img_width and 0 <= y < img_height:
+                draw = ImageDraw.Draw(self.image)
+                eraser_radius = self.eraser_size
+                bbox = [x - eraser_radius, y - eraser_radius, x + eraser_radius, y + eraser_radius]
+                draw.ellipse(bbox, fill=(0, 0, 0, 0))
+                self.update()
+        except Exception as e:
+            logging.error(f"Error applying eraser: {e}")
     
-    def stretch_image(self, factor):
+    def zoom_image(self, factor):
         if self.image:
-            width, height = self.image.size
-            new_width = int(width * factor)
-            new_height = int(height * factor)
-            self.image = self.image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            self.scale_factor *= factor
+            self.scale_factor = max(0.1, min(5.0, self.scale_factor))
             self.update()
+            logging.info(f"Zoom changed to: {self.scale_factor}")
     
-    def shrink_image(self, factor):
-        if self.image:
-            width, height = self.image.size
-            new_width = int(width / factor)
-            new_height = int(height / factor)
-            self.image = self.image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-            self.update()
+    def reset_position(self):
+        self.offset_x = 0
+        self.offset_y = 0
+        self.scale_factor = 1.0
+        self.update()
     
     def apply_cmyk_color(self, c, m, y, k):
-        if self.image:
-            # Simple CMYK adjustment
-            pixels = self.image.load()
-            for i in range(self.image.width):
-                for j in range(self.image.height):
-                    r, g, b, a = pixels[i, j]
-                    # Apply CMYK color shift
-                    r = max(0, min(255, r - c))
-                    g = max(0, min(255, g - m))
-                    b = max(0, min(255, b - y))
-                    brightness = 1 - (k / 255)
-                    r = int(r * brightness)
-                    g = int(g * brightness)
-                    b = int(b * brightness)
-                    pixels[i, j] = (r, g, b, a)
-            self.update()
+        if self.base_image:
+            try:
+                # Always start from base image for consistent CMYK application
+                self.image = self.base_image.copy()
+                
+                # Simple CMYK adjustment
+                pixels = self.image.load()
+                for i in range(self.image.width):
+                    for j in range(self.image.height):
+                        r, g, b, a = pixels[i, j]
+                        # Apply CMYK color shift
+                        r = max(0, min(255, r - c))
+                        g = max(0, min(255, g - m))
+                        b = max(0, min(255, b - y))
+                        brightness = 1 - (k / 255)
+                        r = int(r * brightness)
+                        g = int(g * brightness)
+                        b = int(b * brightness)
+                        pixels[i, j] = (r, g, b, a)
+                self.update()
+            except Exception as e:
+                logging.error(f"Error applying CMYK: {e}")
     
     def get_image(self):
         return self.image
     
     def reset_image(self):
-        if self.original_image:
-            self.image = self.original_image.copy()
+        if self.base_image:
+            self.image = self.base_image.copy()
+            self.original_image = self.base_image.copy()
+            self.offset_x = 0
+            self.offset_y = 0
+            self.scale_factor = 1.0
             self.update()
 
 class CardPrintingApp(QMainWindow):
@@ -320,17 +432,54 @@ class CardPrintingApp(QMainWindow):
         # Mode selection
         layout.addWidget(QLabel("Режим:"))
         self.mode_combo = QComboBox()
-        self.mode_combo.addItems(["Просмотр", "Растянуть", "Уменьшить", "Ластик"])
+        self.mode_combo.addItems(["Просмотр", "Перемещение", "Ластик"])
         self.mode_combo.currentTextChanged.connect(self.change_mode)
         layout.addWidget(self.mode_combo)
         
-        # Eraser size
-        layout.addWidget(QLabel("Размер ластика:"))
+        # Mode-specific controls container
+        self.mode_controls = QWidget()
+        mode_controls_layout = QVBoxLayout(self.mode_controls)
+        mode_controls_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Eraser size control (shown only in eraser mode)
+        self.eraser_control = QWidget()
+        eraser_layout = QVBoxLayout(self.eraser_control)
+        eraser_layout.addWidget(QLabel("Размер ластика:"))
         self.eraser_slider = QSlider(Qt.Orientation.Horizontal)
         self.eraser_slider.setRange(5, 50)
         self.eraser_slider.setValue(20)
         self.eraser_slider.valueChanged.connect(self.change_eraser_size)
-        layout.addWidget(self.eraser_slider)
+        eraser_layout.addWidget(self.eraser_slider)
+        self.eraser_control.setVisible(False)
+        mode_controls_layout.addWidget(self.eraser_control)
+        
+        # Move mode hint (shown only in move mode)
+        self.move_hint = QLabel("Перетаскивайте изображение мышкой\nили используйте стрелки")
+        self.move_hint.setStyleSheet("color: #00ff00; font-size: 11px; padding: 5px;")
+        self.move_hint.setVisible(False)
+        mode_controls_layout.addWidget(self.move_hint)
+        
+        layout.addWidget(self.mode_controls)
+        
+        # Zoom controls
+        zoom_group = QGroupBox("Масштаб")
+        zoom_layout = QHBoxLayout(zoom_group)
+        
+        zoom_in_btn = QPushButton("+")
+        zoom_in_btn.setFixedSize(40, 30)
+        zoom_in_btn.clicked.connect(lambda: self.apply_zoom(1.2))
+        zoom_layout.addWidget(zoom_in_btn)
+        
+        zoom_out_btn = QPushButton("-")
+        zoom_out_btn.setFixedSize(40, 30)
+        zoom_out_btn.clicked.connect(lambda: self.apply_zoom(0.8))
+        zoom_layout.addWidget(zoom_out_btn)
+        
+        reset_pos_btn = QPushButton("Сброс")
+        reset_pos_btn.clicked.connect(self.reset_position)
+        zoom_layout.addWidget(reset_pos_btn)
+        
+        layout.addWidget(zoom_group)
         
         # CMYK controls
         cmyk_group = QGroupBox("CMYK Цвет")
@@ -362,14 +511,6 @@ class CardPrintingApp(QMainWindow):
         reset_btn = QPushButton("Сбросить изображение")
         reset_btn.clicked.connect(self.reset_current_image)
         layout.addWidget(reset_btn)
-        
-        stretch_btn = QPushButton("Растянуть x1.1")
-        stretch_btn.clicked.connect(lambda: self.apply_transform("stretch"))
-        layout.addWidget(stretch_btn)
-        
-        shrink_btn = QPushButton("Уменьшить x0.9")
-        shrink_btn.clicked.connect(lambda: self.apply_transform("shrink"))
-        layout.addWidget(shrink_btn)
         
         layout.addStretch()
         return panel
@@ -483,12 +624,26 @@ class CardPrintingApp(QMainWindow):
     def change_mode(self, mode):
         mode_map = {
             "Просмотр": "view",
-            "Растянуть": "stretch",
-            "Уменьшить": "shrink",
+            "Перемещение": "move",
             "Ластик": "eraser"
         }
         self.side_a_editor.current_mode = mode_map[mode]
         self.side_b_editor.current_mode = mode_map[mode]
+        
+        # Show/hide mode-specific controls
+        self.eraser_control.setVisible(mode == "Ластик")
+        self.move_hint.setVisible(mode == "Перемещение")
+        
+        # Set cursor
+        if mode == "Ластик":
+            self.side_a_editor.setCursor(QCursor(Qt.CursorShape.CrossCursor))
+            self.side_b_editor.setCursor(QCursor(Qt.CursorShape.CrossCursor))
+        elif mode == "Перемещение":
+            self.side_a_editor.setCursor(QCursor(Qt.CursorShape.OpenHandCursor))
+            self.side_b_editor.setCursor(QCursor(Qt.CursorShape.OpenHandCursor))
+        else:
+            self.side_a_editor.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
+            self.side_b_editor.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
     
     def change_eraser_size(self, size):
         self.side_a_editor.eraser_size = size
@@ -500,26 +655,34 @@ class CardPrintingApp(QMainWindow):
         y = self.y_slider.value() * 2.55
         k = self.k_slider.value() * 2.55
         
-        # Apply to currently focused editor (simple approach: both)
+        # Apply to both editors
         self.side_a_editor.apply_cmyk_color(c, m, y, k)
         self.side_b_editor.apply_cmyk_color(c, m, y, k)
     
-    def apply_transform(self, transform):
-        if transform == "stretch":
-            self.side_a_editor.stretch_image(1.1)
-            self.side_b_editor.stretch_image(1.1)
-        elif transform == "shrink":
-            self.side_a_editor.shrink_image(0.9)
-            self.side_b_editor.shrink_image(0.9)
+    def apply_zoom(self, factor):
+        self.side_a_editor.zoom_image(factor)
+        self.side_b_editor.zoom_image(factor)
+    
+    def reset_position(self):
+        self.side_a_editor.reset_position()
+        self.side_b_editor.reset_position()
     
     def reset_current_image(self):
         self.side_a_editor.reset_image()
         self.side_b_editor.reset_image()
         # Reset CMYK sliders
+        self.c_slider.blockSignals(True)
+        self.m_slider.blockSignals(True)
+        self.y_slider.blockSignals(True)
+        self.k_slider.blockSignals(True)
         self.c_slider.setValue(0)
         self.m_slider.setValue(0)
         self.y_slider.setValue(0)
         self.k_slider.setValue(0)
+        self.c_slider.blockSignals(False)
+        self.m_slider.blockSignals(False)
+        self.y_slider.blockSignals(False)
+        self.k_slider.blockSignals(False)
     
     def save_order(self):
         if not self.side_a_editor.get_image() and not self.side_b_editor.get_image():
