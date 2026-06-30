@@ -14,7 +14,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHeaderView, QFrame)
 from PyQt5.QtCore import Qt, QSize, QTimer, QRect, QPoint
 from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont, QCursor
-from PIL import Image, ImageDraw, ImageQt
+from PIL import Image, ImageDraw
+from PIL.ImageQt import ImageQt
 import io
 
 # Setup logging
@@ -127,11 +128,12 @@ class ImageEditor(QWidget):
             
             # Draw image
             try:
-                qimage = ImageQt.ImageQt(self.image)
+                # Convert PIL Image to QImage using correct ImageQt import
+                qimage = ImageQt(self.image)
                 pixmap = QPixmap.fromImage(qimage)
                 painter.drawPixmap(x, y, pixmap.scaled(display_width, display_height, Qt.AspectRatioMode.KeepAspectRatio))
             except Exception as e:
-                logging.error(f"Error drawing image: {e}")
+                logging.error(f"Error drawing image: {e}", exc_info=True)
                 painter.setPen(QPen(QColor(255, 0, 0), 2))
                 painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Ошибка отображения")
             
