@@ -3,6 +3,7 @@ import os
 import json
 import sqlite3
 import logging
+import traceback
 from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QFileDialog, 
@@ -73,8 +74,9 @@ class ImageEditor(QWidget):
             logging.info(f"Attempting to load image: {path}")
             
             if not os.path.exists(path):
-                logging.error(f"File does not exist: {path}")
-                return False
+                error_msg = f"Файл не существует: {path}"
+                logging.error(error_msg)
+                return False, error_msg
             
             # Try loading with PIL
             img = Image.open(path)
@@ -92,11 +94,12 @@ class ImageEditor(QWidget):
             
             self.update()
             logging.info("Image displayed successfully")
-            return True
+            return True, ""
             
         except Exception as e:
-            logging.error(f"Error loading image: {e}", exc_info=True)
-            return False
+            error_msg = f"Ошибка загрузки изображения: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logging.error(error_msg)
+            return False, error_msg
     
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -452,14 +455,17 @@ class CardPrintingApp(QMainWindow):
         eraser_layout.addWidget(self.eraser_slider)
         self.eraser_control.setVisible(False)
         mode_controls_layout.addWidget(self.eraser_control)
+        logging.info("Eraser control added to layout")
         
         # Move mode hint (shown only in move mode)
         self.move_hint = QLabel("Перетаскивайте изображение мышкой\nили используйте стрелки")
         self.move_hint.setStyleSheet("color: #00ff00; font-size: 11px; padding: 5px;")
         self.move_hint.setVisible(False)
         mode_controls_layout.addWidget(self.move_hint)
+        logging.info("Move hint added to layout")
         
         layout.addWidget(self.mode_controls)
+        logging.info("Mode controls added to layout")
         
         # Zoom controls
         zoom_group = QGroupBox("Масштаб")
@@ -480,6 +486,7 @@ class CardPrintingApp(QMainWindow):
         zoom_layout.addWidget(reset_pos_btn)
         
         layout.addWidget(zoom_group)
+        logging.info("Zoom controls added to layout")
         
         # CMYK controls
         cmyk_group = QGroupBox("CMYK Цвет")
@@ -613,13 +620,14 @@ class CardPrintingApp(QMainWindow):
         
         if file_path:
             editor = getattr(self, f"{side_key}_editor")
-            if editor.load_image(file_path):
+            success, error_msg = editor.load_image(file_path)
+            if success:
                 path_label = getattr(self, f"{side_key}_path_label")
                 path_label.setText(file_path)
                 self.current_order[f"{side_key}_path"] = file_path
                 QMessageBox.information(self, "Успех", "Изображение загружено!")
             else:
-                QMessageBox.warning(self, "Ошибка", "Не удалось загрузить изображение")
+                QMessageBox.critical(self, "Ошибка загрузки", error_msg)
     
     def change_mode(self, mode):
         mode_map = {
