@@ -16,6 +16,7 @@ from PyQt5.QtCore import Qt, QSize, QTimer, QRect, QPoint
 from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont, QCursor
 from PIL import Image, ImageDraw
 import io
+import numpy as np
 
 # Setup logging
 logging.basicConfig(
@@ -274,23 +275,29 @@ class ImageEditor(QWidget):
                 # Always start from base image for consistent CMYK application
                 self.image = self.base_image.copy()
                 
-                # Simple CMYK adjustment
-                pixels = self.image.load()
-                for i in range(self.image.width):
-                    for j in range(self.image.height):
-                        r, g, b, a = pixels[i, j]
-                        # Apply CMYK color shift
-                        r = max(0, min(255, r - c))
-                        g = max(0, min(255, g - m))
-                        b = max(0, min(255, b - y))
-                        brightness = 1 - (k / 255)
-                        r = int(r * brightness)
-                        g = int(g * brightness)
-                        b = int(b * brightness)
-                        pixels[i, j] = (r, g, b, a)
+                # Convert to numpy array for vectorized operations (fast)
+                img_array = np.array(self.image, dtype=np.float32)
+                
+                # Apply CMYK color shift using vectorized operations
+                # Subtract C from Red channel, M from Green, Y from Blue
+                img_array[..., 0] = np.maximum(0, img_array[..., 0] - c)  # Red - Cyan
+                img_array[..., 1] = np.maximum(0, img_array[..., 1] - m)  # Green - Magenta
+                img_array[..., 2] = np.maximum(0, img_array[..., 2] - y)  # Blue - Yellow
+                
+                # Apply Black (brightness adjustment)
+                brightness = 1.0 - (k / 255.0)
+                img_array[..., 0] = img_array[..., 0] * brightness
+                img_array[..., 1] = img_array[..., 1] * brightness
+                img_array[..., 2] = img_array[..., 2] * brightness
+                
+                # Clip values to 0-255 and convert back to uint8
+                img_array = np.clip(img_array, 0, 255).astype(np.uint8)
+                
+                # Convert back to PIL Image
+                self.image = Image.fromarray(img_array)
                 self.update()
             except Exception as e:
-                logging.error(f"Error applying CMYK: {e}")
+                logging.error(f"Error applying CMYK: {e}", exc_info=True)
     
     def get_image(self):
         return self.image
