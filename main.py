@@ -3,15 +3,15 @@ import os
 import json
 import sqlite3
 from datetime import datetime
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QFileDialog, 
                              QTabWidget, QTextEdit, QLineEdit, QFormLayout, 
                              QGroupBox, QSplitter, QScrollArea, QMessageBox,
                              QSlider, QComboBox, QCheckBox, QSpinBox, QDialog,
                              QDialogButtonBox, QTableWidget, QTableWidgetItem,
                              QHeaderView, QFrame)
-from PyQt6.QtCore import Qt, QSize, QTimer, QRect
-from PyQt6.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont
+from PyQt5.QtCore import Qt, QSize, QTimer, QRect
+from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont
 from PIL import Image, ImageDraw, ImageQt
 import io
 

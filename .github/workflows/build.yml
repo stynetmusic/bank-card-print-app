@@ -1,4 +1,4 @@
-name: Build Windows EXE (x64)
+name: Build Windows EXE (x64) - Python 3.8.10
 
 on:
   push:
@@ -15,22 +15,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Set up Python
+    - name: Set up Python 3.8.10
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.8.10'
+        architecture: 'x64'
     
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install PyQt6 Pillow reportlab pyinstaller
+        pip install -r requirements.txt
+        pip install pyinstaller
     
-    - name: Build EXE with PyInstaller
-      run: pyinstaller --onefile --windowed --name UF_Print_Cards main.py
+    - name: Build EXE with PyInstaller (x64)
+      run: pyinstaller --onefile --windowed --name UF_Print_Cards --target-architecture x86_64 main.py
     
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: UF_Print_Cards_Windows_x64
+        name: UF_Print_Cards_Windows_x64_Python38
         path: dist/UF_Print_Cards.exe
         retention-days: 30
