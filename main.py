@@ -853,9 +853,16 @@ class CardPrintingApp(QMainWindow):
                 QMessageBox.critical(self, "Ошибка", f"Не удалось создать PDF: {str(e)}")
 
 def main():
+    logging.info("=" * 50)
+    logging.info("UF Print Application Starting")
+    logging.info("Version: 2.0 (with zoom, move, eraser fixes)")
+    logging.info("=" * 50)
+    
     app = QApplication(sys.argv)
     window = CardPrintingApp()
     window.show()
+    
+    logging.info("Application window shown successfully")
     sys.exit(app.exec())
 
 if __name__ == "__main__":
