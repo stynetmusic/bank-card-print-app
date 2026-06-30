@@ -15,7 +15,6 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PyQt5.QtCore import Qt, QSize, QTimer, QRect, QPoint
 from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont, QCursor
 from PIL import Image, ImageDraw
-from PIL.ImageQt import ImageQt
 import io
 
 # Setup logging
@@ -27,6 +26,18 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+
+def pillow_to_qpixmap(pil_img):
+    """Convert PIL Image to QPixmap using byte buffer (PyInstaller-safe)"""
+    try:
+        byte_arr = io.BytesIO()
+        pil_img.save(byte_arr, format='PNG')
+        byte_data = byte_arr.getvalue()
+        qimg = QImage.fromData(byte_data)
+        return QPixmap.fromImage(qimg)
+    except Exception as e:
+        logging.error(f"Error converting PIL to QPixmap: {e}")
+        return None
 
 # Database setup
 DB_NAME = "card_printing.db"
@@ -128,10 +139,12 @@ class ImageEditor(QWidget):
             
             # Draw image
             try:
-                # Convert PIL Image to QImage using correct ImageQt import
-                qimage = ImageQt(self.image)
-                pixmap = QPixmap.fromImage(qimage)
-                painter.drawPixmap(x, y, pixmap.scaled(display_width, display_height, Qt.AspectRatioMode.KeepAspectRatio))
+                # Convert PIL Image to QPixmap using byte buffer (PyInstaller-safe)
+                pixmap = pillow_to_qpixmap(self.image)
+                if pixmap:
+                    painter.drawPixmap(x, y, pixmap.scaled(display_width, display_height, Qt.AspectRatioMode.KeepAspectRatio))
+                else:
+                    raise Exception("Failed to convert image to QPixmap")
             except Exception as e:
                 logging.error(f"Error drawing image: {e}", exc_info=True)
                 painter.setPen(QPen(QColor(255, 0, 0), 2))
