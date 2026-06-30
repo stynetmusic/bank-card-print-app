@@ -73,10 +73,17 @@ class ImageEditor(QWidget):
         try:
             logging.info(f"Attempting to load image: {path}")
             
+            # Check if path exists (handle both forward and back slashes)
             if not os.path.exists(path):
-                error_msg = f"Файл не существует: {path}"
-                logging.error(error_msg)
-                return False, error_msg
+                # Try alternative path formats for Windows/Parallels
+                alt_path = path.replace('/', '\\')
+                if os.path.exists(alt_path):
+                    path = alt_path
+                    logging.info(f"Using alternative path format: {path}")
+                else:
+                    error_msg = f"Файл не существует: {path}\nПробованный альтернативный путь: {alt_path}"
+                    logging.error(error_msg)
+                    return False, error_msg
             
             # Try loading with PIL
             img = Image.open(path)
@@ -313,12 +320,35 @@ class CardPrintingApp(QMainWindow):
             QPushButton:hover {
                 background-color: #00cc00;
             }
+            QPushButton#zoomButton {
+                background-color: #00ff00;
+                color: #000000;
+                font-weight: bold;
+                font-size: 16px;
+            }
             QLineEdit, QTextEdit, QComboBox, QSpinBox {
                 background-color: #0f3460;
                 color: #ffffff;
                 border: 1px solid #00ff00;
                 padding: 5px;
                 border-radius: 3px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #0f3460;
+                color: #ffffff;
+                selection-background-color: #00ff00;
+                selection-color: #1a1a2e;
+            }
+            QComboBox::drop-down {
+                border: 1px solid #00ff00;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid #00ff00;
+                width: 0;
+                height: 0;
             }
             QGroupBox {
                 border: 2px solid #00ff00;
@@ -473,11 +503,13 @@ class CardPrintingApp(QMainWindow):
         
         zoom_in_btn = QPushButton("+")
         zoom_in_btn.setFixedSize(40, 30)
+        zoom_in_btn.setObjectName("zoomButton")
         zoom_in_btn.clicked.connect(lambda: self.apply_zoom(1.2))
         zoom_layout.addWidget(zoom_in_btn)
         
         zoom_out_btn = QPushButton("-")
         zoom_out_btn.setFixedSize(40, 30)
+        zoom_out_btn.setObjectName("zoomButton")
         zoom_out_btn.clicked.connect(lambda: self.apply_zoom(0.8))
         zoom_layout.addWidget(zoom_out_btn)
         
@@ -619,12 +651,17 @@ class CardPrintingApp(QMainWindow):
         )
         
         if file_path:
+            # Normalize path for Parallels/Windows compatibility
+            normalized_path = os.path.abspath(os.path.normpath(file_path))
+            logging.info(f"Original path: {file_path}")
+            logging.info(f"Normalized path: {normalized_path}")
+            
             editor = getattr(self, f"{side_key}_editor")
-            success, error_msg = editor.load_image(file_path)
+            success, error_msg = editor.load_image(normalized_path)
             if success:
                 path_label = getattr(self, f"{side_key}_path_label")
-                path_label.setText(file_path)
-                self.current_order[f"{side_key}_path"] = file_path
+                path_label.setText(normalized_path)
+                self.current_order[f"{side_key}_path"] = normalized_path
                 QMessageBox.information(self, "Успех", "Изображение загружено!")
             else:
                 QMessageBox.critical(self, "Ошибка загрузки", error_msg)
