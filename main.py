@@ -111,6 +111,11 @@ class ImageEditor(QWidget):
             img = Image.open(path)
             logging.info(f"Image loaded successfully: {img.size}, mode: {img.mode}")
             
+            # Force RGB conversion to handle palette mode (P) and other modes
+            if img.mode != 'RGB':
+                logging.info(f"Converting image from {img.mode} to RGB")
+                img = img.convert('RGB')
+            
             # Convert to RGBA
             self.original_image = img.convert("RGBA")
             self.base_image = self.original_image.copy()
@@ -918,7 +923,9 @@ class CardPrintingApp(QMainWindow):
                 QMessageBox.information(self, "Успех", f"PDF сохранен: {file_path}")
                 
             except Exception as e:
-                QMessageBox.critical(self, "Ошибка", f"Не удалось создать PDF: {str(e)}")
+                error_msg = f"Не удалось создать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+                logging.error(error_msg)
+                QMessageBox.critical(self, "Ошибка экспорта PDF", error_msg)
 
 def main():
     logging.info("=" * 50)
