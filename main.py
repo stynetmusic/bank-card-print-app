@@ -92,6 +92,7 @@ class ImageEditor(QWidget):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.position_callback = None  # Callback for sync mode
         self.eraser_callback = None  # Callback for sync eraser
+        self.click_callback = None  # Callback for side selection
         
     def load_image(self, path):
         try:
@@ -182,6 +183,10 @@ class ImageEditor(QWidget):
     def mousePressEvent(self, event):
         if not self.image:
             return
+            
+        # Call click callback for side selection
+        if self.click_callback:
+            self.click_callback()
             
         if self.current_mode == "eraser":
             self.apply_eraser(event.pos())
@@ -502,9 +507,11 @@ class CardPrintingApp(QMainWindow):
         if side_key == "side_a":
             editor.position_callback = lambda dx, dy: self.sync_position("side_b", dx, dy)
             editor.eraser_callback = lambda x, y, size: self.sync_eraser("side_b", x, y, size)
+            editor.click_callback = lambda: self.on_editor_click("side_a")
         elif side_key == "side_b":
             editor.position_callback = lambda dx, dy: self.sync_position("side_a", dx, dy)
             editor.eraser_callback = lambda x, y, size: self.sync_eraser("side_a", x, y, size)
+            editor.click_callback = lambda: self.on_editor_click("side_b")
         
         layout.addWidget(editor)
         
@@ -744,6 +751,30 @@ class CardPrintingApp(QMainWindow):
         else:  # Unchecked
             self.current_side = 'A'  # Default to side A when sync is off
             logging.info("Sync mode disabled: editing side A only")
+        self.update_side_visuals()
+    
+    def on_editor_click(self, side_key):
+        """Handle click on editor canvas for side selection"""
+        # Only switch sides if sync mode is OFF
+        if self.current_side != 'BOTH':
+            new_side = 'A' if side_key == 'side_a' else 'B'
+            if self.current_side != new_side:
+                self.current_side = new_side
+                logging.info(f"Switched to side {new_side} via canvas click")
+                self.update_side_visuals()
+    
+    def update_side_visuals(self):
+        """Update visual indication of active side"""
+        # Update border colors to show active side
+        if self.current_side == 'BOTH':
+            self.side_a_editor.setStyleSheet("background-color: #f0f0f0; border: 2px solid #00ff00;")
+            self.side_b_editor.setStyleSheet("background-color: #f0f0f0; border: 2px solid #00ff00;")
+        elif self.current_side == 'A':
+            self.side_a_editor.setStyleSheet("background-color: #f0f0f0; border: 3px solid #00ff00;")
+            self.side_b_editor.setStyleSheet("background-color: #f0f0f0; border: 1px solid #666666;")
+        elif self.current_side == 'B':
+            self.side_a_editor.setStyleSheet("background-color: #f0f0f0; border: 1px solid #666666;")
+            self.side_b_editor.setStyleSheet("background-color: #f0f0f0; border: 3px solid #00ff00;")
     
     def sync_position(self, target_side, dx, dy):
         """Sync position changes to the other side when in BOTH mode"""
