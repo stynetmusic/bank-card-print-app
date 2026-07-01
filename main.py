@@ -90,6 +90,8 @@ class ImageEditor(QWidget):
         self.setMinimumSize(348, 224)  # 87x56mm at 100 DPI
         self.setStyleSheet("background-color: #f0f0f0; border: 2px solid #00ff00;")
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.position_callback = None  # Callback for sync mode
+        self.eraser_callback = None  # Callback for sync eraser
         
     def load_image(self, path):
         try:
@@ -202,6 +204,9 @@ class ImageEditor(QWidget):
             self.offset_y += delta.y()
             self.last_mouse_pos = event.pos()
             self.update()
+            # Call position callback for sync mode
+            if self.position_callback:
+                self.position_callback(delta.x(), delta.y())
         
         # Update eraser cursor
         if self.current_mode == "eraser":
@@ -221,12 +226,20 @@ class ImageEditor(QWidget):
         
         if key == Qt.Key.Key_Left:
             self.offset_x -= step
+            if self.position_callback:
+                self.position_callback(-step, 0)
         elif key == Qt.Key.Key_Right:
             self.offset_x += step
+            if self.position_callback:
+                self.position_callback(step, 0)
         elif key == Qt.Key.Key_Up:
             self.offset_y -= step
+            if self.position_callback:
+                self.position_callback(0, -step)
         elif key == Qt.Key.Key_Down:
             self.offset_y += step
+            if self.position_callback:
+                self.position_callback(0, step)
         else:
             return
             
@@ -251,6 +264,10 @@ class ImageEditor(QWidget):
             # Convert widget coordinates to image coordinates
             x = int((pos.x() - base_x) / self.scale_factor)
             y = int((pos.y() - base_y) / self.scale_factor)
+            
+            # Call eraser callback for sync mode
+            if self.eraser_callback:
+                self.eraser_callback(x, y, self.eraser_size)
             
             if 0 <= x < img_width and 0 <= y < img_height:
                 draw = ImageDraw.Draw(self.image)
@@ -432,6 +449,7 @@ class CardPrintingApp(QMainWindow):
         
         init_db()
         self.current_order = {}
+        self.current_side = 'BOTH'  # 'A', 'B', or 'BOTH' for synchronous editing
         self.init_ui()
         
     def init_ui(self):
@@ -479,6 +497,15 @@ class CardPrintingApp(QMainWindow):
         # Image editor
         editor = ImageEditor()
         setattr(self, f"{side_key}_editor", editor)
+        
+        # Set up sync callbacks
+        if side_key == "side_a":
+            editor.position_callback = lambda dx, dy: self.sync_position("side_b", dx, dy)
+            editor.eraser_callback = lambda x, y, size: self.sync_eraser("side_b", x, y, size)
+        elif side_key == "side_b":
+            editor.position_callback = lambda dx, dy: self.sync_position("side_a", dx, dy)
+            editor.eraser_callback = lambda x, y, size: self.sync_eraser("side_a", x, y, size)
+        
         layout.addWidget(editor)
         
         # Load button
@@ -532,6 +559,14 @@ class CardPrintingApp(QMainWindow):
         
         layout.addWidget(self.mode_controls)
         logging.info("Mode controls added to layout")
+        
+        # Sync editing mode checkbox
+        self.sync_checkbox = QCheckBox("Синхронное редактирование обеих сторон")
+        self.sync_checkbox.setChecked(True)  # Default to BOTH mode
+        self.sync_checkbox.setStyleSheet("color: #00ff00; padding: 5px;")
+        self.sync_checkbox.stateChanged.connect(self.toggle_sync_mode)
+        layout.addWidget(self.sync_checkbox)
+        logging.info("Sync checkbox added to layout")
         
         # Zoom controls
         zoom_group = QGroupBox("Масштаб")
@@ -702,6 +737,35 @@ class CardPrintingApp(QMainWindow):
             else:
                 QMessageBox.critical(self, "Ошибка загрузки", error_msg)
     
+    def toggle_sync_mode(self, state):
+        if state == 2:  # Checked
+            self.current_side = 'BOTH'
+            logging.info("Sync mode enabled: editing both sides simultaneously")
+        else:  # Unchecked
+            self.current_side = 'A'  # Default to side A when sync is off
+            logging.info("Sync mode disabled: editing side A only")
+    
+    def sync_position(self, target_side, dx, dy):
+        """Sync position changes to the other side when in BOTH mode"""
+        if self.current_side == 'BOTH':
+            target_editor = getattr(self, f"{target_side}_editor")
+            target_editor.offset_x += dx
+            target_editor.offset_y += dy
+            target_editor.update()
+    
+    def sync_eraser(self, target_side, x, y, size):
+        """Sync eraser operations to the other side when in BOTH mode"""
+        if self.current_side == 'BOTH':
+            target_editor = getattr(self, f"{target_side}_editor")
+            if target_editor.image:
+                img_width, img_height = target_editor.image.size
+                if 0 <= x < img_width and 0 <= y < img_height:
+                    draw = ImageDraw.Draw(target_editor.image)
+                    eraser_radius = size
+                    bbox = [x - eraser_radius, y - eraser_radius, x + eraser_radius, y + eraser_radius]
+                    draw.ellipse(bbox, fill=(0, 0, 0, 0))
+                    target_editor.update()
+    
     def change_mode(self, mode):
         mode_map = {
             "Просмотр": "view",
@@ -736,13 +800,24 @@ class CardPrintingApp(QMainWindow):
         y = self.y_slider.value() * 2.55
         k = self.k_slider.value() * 2.55
         
-        # Apply to both editors
-        self.side_a_editor.apply_cmyk_color(c, m, y, k)
-        self.side_b_editor.apply_cmyk_color(c, m, y, k)
+        # Apply based on current side mode
+        if self.current_side == 'BOTH':
+            self.side_a_editor.apply_cmyk_color(c, m, y, k)
+            self.side_b_editor.apply_cmyk_color(c, m, y, k)
+        elif self.current_side == 'A':
+            self.side_a_editor.apply_cmyk_color(c, m, y, k)
+        elif self.current_side == 'B':
+            self.side_b_editor.apply_cmyk_color(c, m, y, k)
     
     def apply_zoom(self, factor):
-        self.side_a_editor.zoom_image(factor)
-        self.side_b_editor.zoom_image(factor)
+        # Apply based on current side mode
+        if self.current_side == 'BOTH':
+            self.side_a_editor.zoom_image(factor)
+            self.side_b_editor.zoom_image(factor)
+        elif self.current_side == 'A':
+            self.side_a_editor.zoom_image(factor)
+        elif self.current_side == 'B':
+            self.side_b_editor.zoom_image(factor)
     
     def reset_position(self):
         self.side_a_editor.reset_position()
