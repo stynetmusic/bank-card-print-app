@@ -897,6 +897,10 @@ class CardPrintingApp(QMainWindow):
                 
                 story = []
                 
+                # Page dimensions in mm
+                page_width_mm = 87
+                page_height_mm = 56
+                
                 # Side A
                 if self.side_a_editor.get_image():
                     img_a = self.side_a_editor.get_image()
@@ -904,7 +908,25 @@ class CardPrintingApp(QMainWindow):
                     img_a.save(img_buffer, format='PNG')
                     img_buffer.seek(0)
                     
-                    rl_img = Image(img_buffer, width=87*mm, height=56*mm)
+                    # Calculate aspect ratio and scale to fit page
+                    img_width, img_height = img_a.size
+                    aspect_ratio = img_width / img_height
+                    
+                    # Calculate dimensions to fit within page (with small margin)
+                    max_width_mm = page_width_mm - 2  # 1mm margin on each side
+                    max_height_mm = page_height_mm - 2
+                    
+                    # Scale to fit while maintaining aspect ratio
+                    if aspect_ratio > (max_width_mm / max_height_mm):
+                        # Width is the limiting factor
+                        final_width_mm = max_width_mm
+                        final_height_mm = max_width_mm / aspect_ratio
+                    else:
+                        # Height is the limiting factor
+                        final_height_mm = max_height_mm
+                        final_width_mm = max_height_mm * aspect_ratio
+                    
+                    rl_img = Image(img_buffer, width=final_width_mm*mm, height=final_height_mm*mm)
                     story.append(rl_img)
                 
                 # Side B (if exists)
@@ -915,7 +937,25 @@ class CardPrintingApp(QMainWindow):
                     img_b.save(img_buffer, format='PNG')
                     img_buffer.seek(0)
                     
-                    rl_img = Image(img_buffer, width=87*mm, height=56*mm)
+                    # Calculate aspect ratio and scale to fit page
+                    img_width, img_height = img_b.size
+                    aspect_ratio = img_width / img_height
+                    
+                    # Calculate dimensions to fit within page (with small margin)
+                    max_width_mm = page_width_mm - 2  # 1mm margin on each side
+                    max_height_mm = page_height_mm - 2
+                    
+                    # Scale to fit while maintaining aspect ratio
+                    if aspect_ratio > (max_width_mm / max_height_mm):
+                        # Width is the limiting factor
+                        final_width_mm = max_width_mm
+                        final_height_mm = max_width_mm / aspect_ratio
+                    else:
+                        # Height is the limiting factor
+                        final_height_mm = max_height_mm
+                        final_width_mm = max_height_mm * aspect_ratio
+                    
+                    rl_img = Image(img_buffer, width=final_width_mm*mm, height=final_height_mm*mm)
                     story.append(rl_img)
                 
                 doc.build(story)
