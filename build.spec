@@ -10,6 +10,7 @@ hiddenimports += ['PyQt6', 'PyQt6.sip', 'PIL._tkinter_finder']
 
 datas = collect_data_files('PyQt6')
 datas += collect_data_files('PIL')
+datas += [('Arial.ttf', '.')]
 
 a = Analysis(
     ['main.py'],
