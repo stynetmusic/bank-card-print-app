@@ -28,7 +28,8 @@ jobs:
         pip install pyinstaller
     
     - name: Build EXE with PyInstaller (x64)
-      run: pyinstaller --onefile --windowed --name UF_Print_Cards --target-architecture x86_64 main.py
+      run: |
+        pyinstaller --noconfirm --clean --onefile --windowed --name UF_Print_Cards --target-architecture x86_64 --collect-submodules PyQt6 --collect-data PyQt6 --collect-data PIL build.spec
     
     - name: Upload artifact
       uses: actions/upload-artifact@v4

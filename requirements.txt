@@ -1,4 +1,4 @@
-PyQt5==5.15.10
-Pillow==10.1.0
-reportlab==4.0.7
+PyQt6>=6.4,<6.7
+Pillow>=10.1.0
+reportlab>=4.0.7
 numpy

@@ -4,19 +4,21 @@ import json
 import sqlite3
 import logging
 import traceback
+from pathlib import Path
 from datetime import datetime
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QFileDialog, 
                              QTabWidget, QTextEdit, QLineEdit, QFormLayout, 
                              QGroupBox, QSplitter, QScrollArea, QMessageBox,
                              QSlider, QComboBox, QCheckBox, QSpinBox, QDialog,
                              QDialogButtonBox, QTableWidget, QTableWidgetItem,
                              QHeaderView, QFrame)
-from PyQt5.QtCore import Qt, QSize, QTimer, QRect, QPoint
-from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont, QCursor
-from PIL import Image, ImageDraw
+from PyQt6.QtCore import Qt, QSize, QTimer, QRect, QPoint, QDir
+from PyQt6.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont, QCursor, QAction
+from PIL import Image, ImageDraw, ImageQt
 import io
 import numpy as np
+import copy
 
 # Setup logging
 logging.basicConfig(
@@ -29,28 +31,50 @@ logging.basicConfig(
 )
 
 def pillow_to_qpixmap(pil_img):
-    """Convert PIL Image to QPixmap using raw data (fast, no compression)"""
+    """Convert PIL Image to QPixmap without relying on Qt's built-in image plugins."""
     try:
-        # Convert to RGBA if needed
+        if pil_img is None:
+            return None
+
         if pil_img.mode != "RGBA":
             pil_img = pil_img.convert("RGBA")
-        
-        # Get raw pixel bytes without PNG compression
-        data = pil_img.tobytes("raw", "RGBA")
-        
-        # Create QImage directly from memory
-        qimg = QImage(data, pil_img.size[0], pil_img.size[1], QImage.Format_RGBA8888)
-        
-        # Important: keep reference to data to prevent Qt crash
-        qimg.bits().setsize(pil_img.size[0] * pil_img.size[1] * 4)
-        
-        return QPixmap.fromImage(qimg)
+
+        try:
+            image_qt = ImageQt.ImageQt(pil_img)
+            qimg = QImage(image_qt)
+            if qimg.isNull():
+                raise ValueError("ImageQt conversion produced an empty QImage")
+            return QPixmap.fromImage(qimg)
+        except Exception as exc:
+            logging.debug(f"ImageQt conversion failed, falling back to raw bytes: {exc}")
+
+            data = pil_img.tobytes("raw", "RGBA")
+            qimg = QImage(data, pil_img.size[0], pil_img.size[1], QImage.Format.Format_RGBA8888)
+            qimg.bits().setsize(pil_img.size[0] * pil_img.size[1] * 4)
+            return QPixmap.fromImage(qimg)
     except Exception as e:
         logging.error(f"Error converting PIL to QPixmap: {e}", exc_info=True)
         return None
 
 # Database setup
 DB_NAME = "card_printing.db"
+CONFIG_PATH = Path(__file__).resolve().parent / "company_config.json"
+
+
+def normalize_path(path):
+    if not path:
+        return ""
+
+    raw_path = str(path).strip()
+    if not raw_path:
+        return ""
+
+    try:
+        normalized = Path(raw_path).expanduser().resolve(strict=False)
+        return QDir.toNativeSeparators(str(normalized))
+    except Exception:
+        return QDir.toNativeSeparators(raw_path)
+
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
@@ -93,22 +117,30 @@ class ImageEditor(QWidget):
         self.position_callback = None  # Callback for sync mode
         self.eraser_callback = None  # Callback for sync eraser
         self.click_callback = None  # Callback for side selection
+        self.history_callback = None  # Callback for saving to history
         
     def load_image(self, path):
         try:
+            path = normalize_path(path)
             logging.info(f"Attempting to load image: {path}")
-            
-            # Check if path exists (handle both forward and back slashes)
-            if not os.path.exists(path):
-                # Try alternative path formats for Windows/Parallels
-                alt_path = path.replace('/', '\\')
-                if os.path.exists(alt_path):
-                    path = alt_path
-                    logging.info(f"Using alternative path format: {path}")
-                else:
-                    error_msg = f"Файл не существует: {path}\nПробованный альтернативный путь: {alt_path}"
-                    logging.error(error_msg)
-                    return False, error_msg
+
+            candidate_paths = [path]
+            if os.name == "nt":
+                candidate_paths.extend([path.replace('/', '\\'), path.replace('\\', '/')])
+
+            resolved_path = None
+            for candidate in candidate_paths:
+                if os.path.exists(candidate):
+                    resolved_path = candidate
+                    break
+
+            if not resolved_path:
+                error_msg = f"Файл не существует: {path}"
+                logging.error(error_msg)
+                return False, error_msg
+
+            path = resolved_path
+            logging.info(f"Using resolved path: {path}")
             
             # Try loading with PIL
             img = Image.open(path)
@@ -221,6 +253,9 @@ class ImageEditor(QWidget):
         if self.current_mode == "move":
             self.dragging = False
             self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
+            # Notify parent to save to history after move
+            if self.history_callback:
+                self.history_callback()
     
     def keyPressEvent(self, event):
         if not self.image:
@@ -455,6 +490,10 @@ class CardPrintingApp(QMainWindow):
         init_db()
         self.current_order = {}
         self.current_side = 'BOTH'  # 'A', 'B', or 'BOTH' for synchronous editing
+        self.organization_data = self.load_organization_config()
+        self.undo_stack = []
+        self.redo_stack = []
+        self.max_history_depth = 30
         self.init_ui()
         
     def init_ui(self):
@@ -462,6 +501,9 @@ class CardPrintingApp(QMainWindow):
         self.setCentralWidget(main_widget)
         main_layout = QVBoxLayout(main_widget)
         
+        # Menu bar
+        self._create_main_menu()
+
         # Header
         header = QLabel("UF PRINT - СИСТЕМА ДЛЯ ПЕЧАТИ БАНКОВСКИХ КАРТ")
         header.setStyleSheet("font-size: 24px; font-weight: bold; color: #00ff00; padding: 10px;")
@@ -477,6 +519,13 @@ class CardPrintingApp(QMainWindow):
         self.create_customer_tab()
         self.create_history_tab()
         
+    def _create_main_menu(self):
+        menu_bar = self.menuBar()
+        extra_menu = menu_bar.addMenu("Дополнительно")
+        org_info_action = QAction("Информация об организации", self)
+        org_info_action.triggered.connect(self.open_organization_info_dialog)
+        extra_menu.addAction(org_info_action)
+
     def create_editor_tab(self):
         editor_tab = QWidget()
         layout = QHBoxLayout(editor_tab)
@@ -508,10 +557,12 @@ class CardPrintingApp(QMainWindow):
             editor.position_callback = lambda dx, dy: self.sync_position("side_b", dx, dy)
             editor.eraser_callback = lambda x, y, size: self.sync_eraser("side_b", x, y, size)
             editor.click_callback = lambda: self.on_editor_click("side_a")
+            editor.history_callback = lambda: self.save_to_history()
         elif side_key == "side_b":
             editor.position_callback = lambda dx, dy: self.sync_position("side_a", dx, dy)
             editor.eraser_callback = lambda x, y, size: self.sync_eraser("side_a", x, y, size)
             editor.click_callback = lambda: self.on_editor_click("side_b")
+            editor.history_callback = lambda: self.save_to_history()
         
         layout.addWidget(editor)
         
@@ -659,6 +710,15 @@ class CardPrintingApp(QMainWindow):
         
         self.company_name = QLineEdit()
         company_layout.addRow("Название компании:", self.company_name)
+
+        self.customer_contact_person = QLineEdit()
+        company_layout.addRow("Заказчик:", self.customer_contact_person)
+
+        self.order_number = QLineEdit()
+        company_layout.addRow("Номер заказа:", self.order_number)
+
+        self.production_deadline = QLineEdit()
+        company_layout.addRow("Срок изготовления:", self.production_deadline)
         
         self.print_quantity = QSpinBox()
         self.print_quantity.setRange(1, 100000)
@@ -694,6 +754,10 @@ class CardPrintingApp(QMainWindow):
         export_btn = QPushButton("Экспорт в PDF (для печати)")
         export_btn.clicked.connect(self.export_pdf)
         layout.addWidget(export_btn)
+
+        self.btn_generate_kp = QPushButton("Сформировать КП в PDF")
+        self.btn_generate_kp.clicked.connect(self.generate_commercial_offer_pdf)
+        layout.addWidget(self.btn_generate_kp)
         
         self.tab_widget.addTab(customer_tab, "Данные заказа")
         
@@ -729,8 +793,7 @@ class CardPrintingApp(QMainWindow):
         )
         
         if file_path:
-            # Normalize path for Parallels/Windows compatibility
-            normalized_path = os.path.abspath(os.path.normpath(file_path))
+            normalized_path = normalize_path(file_path)
             logging.info(f"Original path: {file_path}")
             logging.info(f"Normalized path: {normalized_path}")
             
@@ -775,6 +838,176 @@ class CardPrintingApp(QMainWindow):
         elif self.current_side == 'B':
             self.side_a_editor.setStyleSheet("background-color: #f0f0f0; border: 1px solid #666666;")
             self.side_b_editor.setStyleSheet("background-color: #f0f0f0; border: 3px solid #00ff00;")
+    
+    def save_to_history(self):
+        """Save current state of both sides to undo stack"""
+        try:
+            # Save state of both editors
+            state = {
+                'side_a': {
+                    'image': self.side_a_editor.image.copy() if self.side_a_editor.image else None,
+                    'original_image': self.side_a_editor.original_image.copy() if self.side_a_editor.original_image else None,
+                    'base_image': self.side_a_editor.base_image.copy() if self.side_a_editor.base_image else None,
+                    'scale_factor': self.side_a_editor.scale_factor,
+                    'offset_x': self.side_a_editor.offset_x,
+                    'offset_y': self.side_a_editor.offset_y
+                },
+                'side_b': {
+                    'image': self.side_b_editor.image.copy() if self.side_b_editor.image else None,
+                    'original_image': self.side_b_editor.original_image.copy() if self.side_b_editor.original_image else None,
+                    'base_image': self.side_b_editor.base_image.copy() if self.side_b_editor.base_image else None,
+                    'scale_factor': self.side_b_editor.scale_factor,
+                    'offset_x': self.side_b_editor.offset_x,
+                    'offset_y': self.side_b_editor.offset_y
+                },
+                'cmyk': {
+                    'c': self.c_slider.value(),
+                    'm': self.m_slider.value(),
+                    'y': self.y_slider.value(),
+                    'k': self.k_slider.value()
+                }
+            }
+            
+            # Add to undo stack
+            self.undo_stack.append(state)
+            
+            # Limit stack size
+            if len(self.undo_stack) > self.max_history_depth:
+                self.undo_stack.pop(0)
+            
+            # Clear redo stack on new action
+            self.redo_stack.clear()
+            
+            logging.info(f"State saved to undo stack (depth: {len(self.undo_stack)})")
+        except Exception as e:
+            logging.error(f"Error saving to history: {e}", exc_info=True)
+    
+    def undo(self):
+        """Restore previous state from undo stack"""
+        if not self.undo_stack:
+            logging.info("Nothing to undo")
+            return
+        
+        try:
+            # Save current state to redo stack
+            current_state = {
+                'side_a': {
+                    'image': self.side_a_editor.image.copy() if self.side_a_editor.image else None,
+                    'original_image': self.side_a_editor.original_image.copy() if self.side_a_editor.original_image else None,
+                    'base_image': self.side_a_editor.base_image.copy() if self.side_a_editor.base_image else None,
+                    'scale_factor': self.side_a_editor.scale_factor,
+                    'offset_x': self.side_a_editor.offset_x,
+                    'offset_y': self.side_a_editor.offset_y
+                },
+                'side_b': {
+                    'image': self.side_b_editor.image.copy() if self.side_b_editor.image else None,
+                    'original_image': self.side_b_editor.original_image.copy() if self.side_b_editor.original_image else None,
+                    'base_image': self.side_b_editor.base_image.copy() if self.side_b_editor.base_image else None,
+                    'scale_factor': self.side_b_editor.scale_factor,
+                    'offset_x': self.side_b_editor.offset_x,
+                    'offset_y': self.side_b_editor.offset_y
+                },
+                'cmyk': {
+                    'c': self.c_slider.value(),
+                    'm': self.m_slider.value(),
+                    'y': self.y_slider.value(),
+                    'k': self.k_slider.value()
+                }
+            }
+            self.redo_stack.append(current_state)
+            
+            # Restore previous state
+            state = self.undo_stack.pop()
+            self.restore_state(state)
+            
+            logging.info(f"Undo performed (undo depth: {len(self.undo_stack)}, redo depth: {len(self.redo_stack)})")
+        except Exception as e:
+            logging.error(f"Error during undo: {e}", exc_info=True)
+    
+    def redo(self):
+        """Restore next state from redo stack"""
+        if not self.redo_stack:
+            logging.info("Nothing to redo")
+            return
+        
+        try:
+            # Save current state to undo stack
+            current_state = {
+                'side_a': {
+                    'image': self.side_a_editor.image.copy() if self.side_a_editor.image else None,
+                    'original_image': self.side_a_editor.original_image.copy() if self.side_a_editor.original_image else None,
+                    'base_image': self.side_a_editor.base_image.copy() if self.side_a_editor.base_image else None,
+                    'scale_factor': self.side_a_editor.scale_factor,
+                    'offset_x': self.side_a_editor.offset_x,
+                    'offset_y': self.side_a_editor.offset_y
+                },
+                'side_b': {
+                    'image': self.side_b_editor.image.copy() if self.side_b_editor.image else None,
+                    'original_image': self.side_b_editor.original_image.copy() if self.side_b_editor.original_image else None,
+                    'base_image': self.side_b_editor.base_image.copy() if self.side_b_editor.base_image else None,
+                    'scale_factor': self.side_b_editor.scale_factor,
+                    'offset_x': self.side_b_editor.offset_x,
+                    'offset_y': self.side_b_editor.offset_y
+                },
+                'cmyk': {
+                    'c': self.c_slider.value(),
+                    'm': self.m_slider.value(),
+                    'y': self.y_slider.value(),
+                    'k': self.k_slider.value()
+                }
+            }
+            self.undo_stack.append(current_state)
+            
+            # Restore next state
+            state = self.redo_stack.pop()
+            self.restore_state(state)
+            
+            logging.info(f"Redo performed (undo depth: {len(self.undo_stack)}, redo depth: {len(self.redo_stack)})")
+        except Exception as e:
+            logging.error(f"Error during redo: {e}", exc_info=True)
+    
+    def restore_state(self, state):
+        """Restore editor state from saved state dict"""
+        try:
+            # Restore side A
+            if state['side_a']['image']:
+                self.side_a_editor.image = state['side_a']['image'].copy()
+                self.side_a_editor.original_image = state['side_a']['original_image'].copy()
+                self.side_a_editor.base_image = state['side_a']['base_image'].copy()
+                self.side_a_editor.scale_factor = state['side_a']['scale_factor']
+                self.side_a_editor.offset_x = state['side_a']['offset_x']
+                self.side_a_editor.offset_y = state['side_a']['offset_y']
+                self.side_a_editor.update()
+            
+            # Restore side B
+            if state['side_b']['image']:
+                self.side_b_editor.image = state['side_b']['image'].copy()
+                self.side_b_editor.original_image = state['side_b']['original_image'].copy()
+                self.side_b_editor.base_image = state['side_b']['base_image'].copy()
+                self.side_b_editor.scale_factor = state['side_b']['scale_factor']
+                self.side_b_editor.offset_x = state['side_b']['offset_x']
+                self.side_b_editor.offset_y = state['side_b']['offset_y']
+                self.side_b_editor.update()
+            
+            # Restore CMYK sliders
+            self.c_slider.blockSignals(True)
+            self.m_slider.blockSignals(True)
+            self.y_slider.blockSignals(True)
+            self.k_slider.blockSignals(True)
+            
+            self.c_slider.setValue(state['cmyk']['c'])
+            self.m_slider.setValue(state['cmyk']['m'])
+            self.y_slider.setValue(state['cmyk']['y'])
+            self.k_slider.setValue(state['cmyk']['k'])
+            
+            self.c_slider.blockSignals(False)
+            self.m_slider.blockSignals(False)
+            self.y_slider.blockSignals(False)
+            self.k_slider.blockSignals(False)
+            
+            logging.info("State restored successfully")
+        except Exception as e:
+            logging.error(f"Error restoring state: {e}", exc_info=True)
     
     def sync_position(self, target_side, dx, dy):
         """Sync position changes to the other side when in BOTH mode"""
@@ -871,6 +1104,114 @@ class CardPrintingApp(QMainWindow):
         self.y_slider.blockSignals(False)
         self.k_slider.blockSignals(False)
     
+    def get_config_path(self):
+        return os.path.join(os.path.dirname(__file__), "company_config.json")
+
+    def save_company_settings(self, name, address, phone, logo_path):
+        data = {
+            "company_name": name,
+            "company_address": address,
+            "company_phone": phone,
+            "company_logo": logo_path
+        }
+        try:
+            with open(self.get_config_path(), "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+            self.organization_data = {
+                "name": name,
+                "logo_path": logo_path,
+                "address": address,
+                "phone": phone,
+            }
+            return True
+        except Exception as exc:
+            logging.error(f"Ошибка сохранения конфигурации: {exc}")
+            return False
+
+    def load_company_settings(self):
+        config_path = self.get_config_path()
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                return {
+                    "company_name": data.get("company_name", ""),
+                    "company_address": data.get("company_address", ""),
+                    "company_phone": data.get("company_phone", ""),
+                    "company_logo": data.get("company_logo", "")
+                }
+            except Exception as exc:
+                logging.error(f"Ошибка загрузки конфигурации: {exc}")
+        return {"company_name": "", "company_address": "", "company_phone": "", "company_logo": ""}
+
+    def load_organization_config(self):
+        settings = self.load_company_settings()
+        return {
+            "name": settings.get("company_name", ""),
+            "logo_path": settings.get("company_logo", ""),
+            "address": settings.get("company_address", ""),
+            "phone": settings.get("company_phone", "")
+        }
+
+    def save_organization_config(self, data):
+        return self.save_company_settings(
+            data.get("name", ""),
+            data.get("address", ""),
+            data.get("phone", ""),
+            data.get("logo_path", "")
+        )
+
+    def open_organization_info_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Информация об организации")
+        dialog.setMinimumWidth(480)
+
+        form = QFormLayout(dialog)
+        name_edit = QLineEdit(self.organization_data.get("name", ""))
+        logo_edit = QLineEdit(self.organization_data.get("logo_path", ""))
+        address_edit = QLineEdit(self.organization_data.get("address", ""))
+        phone_edit = QLineEdit(self.organization_data.get("phone", ""))
+
+        form.addRow("Название:", name_edit)
+        form.addRow("Логотип:", logo_edit)
+        form.addRow("", QPushButton("Выбрать файл", dialog))
+        form.addRow("Адрес:", address_edit)
+        form.addRow("Телефон:", phone_edit)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        form.addRow(buttons)
+
+        select_logo_btn = dialog.findChild(QPushButton)
+        if select_logo_btn is not None:
+            select_logo_btn.clicked.connect(lambda: self.select_org_logo(logo_edit))
+
+        def handle_save():
+            data = {
+                "name": name_edit.text().strip(),
+                "logo_path": logo_edit.text().strip(),
+                "address": address_edit.text().strip(),
+                "phone": phone_edit.text().strip(),
+            }
+            if self.save_organization_config(data):
+                QMessageBox.information(self, "Успех", "Данные организации сохранены")
+                dialog.accept()
+            else:
+                QMessageBox.critical(self, "Ошибка", "Не удалось сохранить данные организации")
+
+        buttons.accepted.connect(handle_save)
+        buttons.rejected.connect(dialog.reject)
+        dialog.exec()
+
+    def select_org_logo(self, logo_edit):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Выберите логотип организации",
+            "",
+            "Изображения (*.png *.jpg *.jpeg *.bmp *.tiff)"
+        )
+        if file_path:
+            logo_edit.setText(normalize_path(file_path))
+
     def save_order(self):
         if not self.side_a_editor.get_image() and not self.side_b_editor.get_image():
             QMessageBox.warning(self, "Ошибка", "Загрузите хотя бы одно изображение")
@@ -884,7 +1225,10 @@ class CardPrintingApp(QMainWindow):
             "print_type": self.print_type.currentText(),
             "paper_type": self.paper_type.currentText(),
             "lamination": self.lamination.currentText(),
-            "additional": self.additional_specs.toPlainText()
+            "additional": self.additional_specs.toPlainText(),
+            "customer_contact": self.customer_contact_person.text().strip(),
+            "order_number": self.order_number.text().strip(),
+            "production_deadline": self.production_deadline.text().strip()
         })
         
         cursor.execute('''
@@ -948,10 +1292,12 @@ class CardPrintingApp(QMainWindow):
         conn.close()
         
         if order:
-            _, customer, company, print_specs, side_a, side_b, created_at, status = order
+            _, customer_name, customer_phone, customer_email, company_name, print_specs, side_a, side_b, created_at, status = order
             
-            self.customer_name.setText(customer)
-            self.company_name.setText(company)
+            self.customer_name.setText(customer_name)
+            self.customer_phone.setText(customer_phone)
+            self.customer_email.setText(customer_email)
+            self.company_name.setText(company_name)
             
             specs = json.loads(print_specs)
             self.print_quantity.setValue(specs.get("quantity", 100))
@@ -959,6 +1305,9 @@ class CardPrintingApp(QMainWindow):
             self.paper_type.setCurrentText(specs.get("paper_type", "Пластик PVC"))
             self.lamination.setCurrentText(specs.get("lamination", "Без ламинации"))
             self.additional_specs.setText(specs.get("additional", ""))
+            self.customer_contact_person.setText(specs.get("customer_contact", ""))
+            self.order_number.setText(specs.get("order_number", ""))
+            self.production_deadline.setText(specs.get("production_deadline", ""))
             
             if side_a:
                 self.side_a_editor.load_image(side_a)
@@ -972,6 +1321,143 @@ class CardPrintingApp(QMainWindow):
             
             self.tab_widget.setCurrentIndex(0)
     
+    def generate_commercial_offer_pdf(self):
+        company_data = self.load_company_settings()
+        comp_name = company_data.get("company_name", "Имя компании не указано")
+        comp_address = company_data.get("company_address", "Адрес не указан")
+        comp_phone = company_data.get("company_phone", "Телефон не указан")
+        comp_logo = company_data.get("company_logo", "")
+
+        image_a = self.side_a_editor.get_image()
+        image_b = self.side_b_editor.get_image()
+
+        if not image_a and not image_b:
+            QMessageBox.warning(self, "Ошибка", "Нет изображений для генерации КП")
+            return
+
+        customer_name = self.customer_name.text().strip() or "Не указан"
+        customer_phone = self.customer_phone.text().strip() or "Не указан"
+        customer_email = self.customer_email.text().strip() or "Не указан"
+        order_number = self.order_number.text().strip() or "Б/Н"
+        production_deadline = self.production_deadline.text().strip() or "Не установлен"
+        company_name = self.company_name.text().strip() or "—"
+        print_quantity = str(self.print_quantity.value())
+        print_type = self.print_type.currentText()
+        paper_type = self.paper_type.currentText()
+        lamination = self.lamination.currentText()
+        additional = self.additional_specs.toPlainText().strip() or "—"
+
+        default_filename = f"kp_order_{order_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Сохранить коммерческое предложение",
+            default_filename,
+            "PDF файлы (*.pdf)"
+        )
+
+        if not file_path:
+            return
+
+        try:
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib import colors
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import mm
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+
+            doc = SimpleDocTemplate(file_path, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+            styles = getSampleStyleSheet()
+            story = []
+
+            font_path = os.path.join(os.environ.get("WINDIR", "C:\\Windows"), "Fonts", "arial.ttf")
+            if os.path.exists(font_path):
+                pdfmetrics.registerFont(TTFont('Arial', font_path))
+                font_name = 'Arial'
+            else:
+                font_name = 'Helvetica'
+
+            title_style = ParagraphStyle('KPTitle', parent=styles['Heading1'], fontName=font_name, fontSize=18, leading=22, textColor=colors.HexColor("#0066cc"))
+            normal_style = ParagraphStyle('KPNormal', parent=styles['Normal'], fontName=font_name, fontSize=10, leading=14)
+
+            header_data = []
+            company_info_text = f"<b>{comp_name}</b><br/>Адрес: {comp_address}<br/>Тел: {comp_phone}"
+
+            if comp_logo and os.path.exists(comp_logo):
+                try:
+                    logo_img = Image(comp_logo, width=100, height=50)
+                    header_data.append([logo_img, Paragraph(company_info_text, normal_style)])
+                except Exception:
+                    header_data.append(["", Paragraph(company_info_text, normal_style)])
+            else:
+                header_data.append(["", Paragraph(company_info_text, normal_style)])
+
+            header_table = Table(header_data, colWidths=[120, 420])
+            header_table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ]))
+            story.append(header_table)
+            story.append(Spacer(1, 15))
+
+            story.append(Paragraph(f"Коммерческое предложение по заказу № {order_number}", title_style))
+            story.append(Paragraph(f"Дата создания: {datetime.now().strftime('%d.%m.%Y')}", normal_style))
+            story.append(Spacer(1, 15))
+
+            info_data = [
+                [Paragraph("<b>Информация о заказчике:</b>", normal_style), Paragraph("<b>Параметры заказа:</b>", normal_style)],
+                [
+                    Paragraph(f"Заказчик: {customer_name}<br/>Телефон: {customer_phone}<br/>Email: {customer_email}", normal_style),
+                    Paragraph(f"Срок изготовления: {production_deadline}<br/>Компания: {company_name}<br/>Тираж: {print_quantity}<br/>Тип печати: {print_type}<br/>Материал: {paper_type}<br/>Ламинация: {lamination}", normal_style)
+                ]
+            ]
+            info_table = Table(info_data, colWidths=[270, 270])
+            info_table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('PADDING', (0, 0), (-1, -1), 6),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ]))
+            story.append(info_table)
+            story.append(Spacer(1, 20))
+
+            story.append(Paragraph("<b>Макет карты (Сторона А и Сторона Б):</b>", normal_style))
+            story.append(Spacer(1, 10))
+
+            images_data = []
+            row_images = []
+
+            for label, image_obj in (("Сторона А", image_a), ("Сторона Б", image_b)):
+                if image_obj is not None:
+                    try:
+                        img_buffer = io.BytesIO()
+                        image_obj.save(img_buffer, format='PNG')
+                        img_buffer.seek(0)
+                        row_images.append(Image(img_buffer, width=240, height=150))
+                    except Exception:
+                        row_images.append(Paragraph(f"[Ошибка загрузки {label}]", normal_style))
+                else:
+                    row_images.append(Paragraph(f"[{label} отсутствует]", normal_style))
+
+            images_data.append(row_images)
+            images_table = Table(images_data, colWidths=[270, 270])
+            images_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            story.append(images_table)
+            story.append(Spacer(1, 10))
+            story.append(Paragraph("<b>Дополнительные характеристики:</b>", normal_style))
+            story.append(Paragraph(additional, normal_style))
+
+            doc.build(story)
+            QMessageBox.information(self, "Успех", f"КП успешно сохранено:\n{file_path}")
+        except Exception as e:
+            error_msg = f"Не удалось сгенерировать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logging.error(error_msg)
+            QMessageBox.critical(self, "Ошибка генерации КП", error_msg)
+
     def export_pdf(self):
         if not self.side_a_editor.get_image() and not self.side_b_editor.get_image():
             QMessageBox.warning(self, "Ошибка", "Нет изображений для экспорта")
