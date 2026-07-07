@@ -1371,15 +1371,25 @@ class CardPrintingApp(QMainWindow):
             styles = getSampleStyleSheet()
             story = []
 
-            font_path = os.path.join(os.environ.get("WINDIR", "C:\\Windows"), "Fonts", "arial.ttf")
-            if os.path.exists(font_path):
-                pdfmetrics.registerFont(TTFont('Arial', font_path))
-                font_name = 'Arial'
-            else:
-                font_name = 'Helvetica'
+            base_dir = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+            font_candidates = [
+                os.path.join(base_dir, "Arial.ttf"),
+                os.path.join(base_dir, "fonts", "Arial.ttf"),
+                os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "arial.ttf"),
+            ]
+            font_path = None
+            for candidate in font_candidates:
+                if os.path.exists(candidate):
+                    font_path = candidate
+                    break
 
-            title_style = ParagraphStyle('KPTitle', parent=styles['Heading1'], fontName=font_name, fontSize=18, leading=22, textColor=colors.HexColor("#0066cc"))
-            normal_style = ParagraphStyle('KPNormal', parent=styles['Normal'], fontName=font_name, fontSize=10, leading=14)
+            if font_path:
+                pdfmetrics.registerFont(TTFont('CustomArial', font_path))
+            else:
+                logging.warning("Arial.ttf not found for КП PDF generation; falling back to default font")
+
+            title_style = ParagraphStyle('KPTitle', parent=styles['Heading1'], fontName='CustomArial', fontSize=18, leading=22, textColor=colors.HexColor("#0066cc"))
+            normal_style = ParagraphStyle('KPNormal', parent=styles['Normal'], fontName='CustomArial', fontSize=10, leading=14)
 
             header_data = []
             company_info_text = f"<b>{comp_name}</b><br/>Адрес: {comp_address}<br/>Тел: {comp_phone}"
