@@ -4,9 +4,16 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
 
-hiddenimports = collect_submodules('PyQt6')
+hiddenimports = [
+    'PyQt6.QtCore',
+    'PyQt6.QtGui',
+    'PyQt6.QtWidgets',
+    'PyQt6',
+    'PyQt6.sip',
+]
+hiddenimports += collect_submodules('PyQt6')
 hiddenimports += collect_submodules('PIL')
-hiddenimports += ['PyQt6', 'PyQt6.sip', 'PIL._tkinter_finder']
+hiddenimports += ['PIL._tkinter_finder']
 
 datas = collect_data_files('PyQt6')
 datas += collect_data_files('PIL')
