@@ -1,30 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
-
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
 
-hiddenimports = [
-    'PyQt6.QtCore',
-    'PyQt6.QtGui',
-    'PyQt6.QtWidgets',
-    'PyQt6',
-    'PyQt6.sip',
-]
-hiddenimports += collect_submodules('PyQt6')
-hiddenimports += collect_submodules('PIL')
-hiddenimports += ['PIL._tkinter_finder']
-
-datas = collect_data_files('PyQt6')
-datas += collect_data_files('PIL')
-datas += [('Arial.ttf', '.')]
+# Собираем данные и подмодули PyQt6 принудительно
+pyqt6_datas = collect_data_files('PyQt6')
+pyqt6_hiddenimports = collect_submodules('PyQt6')
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=datas,
-    hiddenimports=hiddenimports,
+    datas=[('Arial.ttf', '.')] + pyqt6_datas,
+    hiddenimports=['PyQt6.QtCore', 'PyQt6.QtGui', 'PyQt6.QtWidgets'] + pyqt6_hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -34,8 +22,7 @@ a = Analysis(
     cipher=block_cipher,
     noarchive=False,
 )
-
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure, a.cipher, block_cipher=a.zipped_data)
 
 exe = EXE(
     pyz,
@@ -48,7 +35,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=False,
+    upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
@@ -57,5 +44,4 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,
 )
