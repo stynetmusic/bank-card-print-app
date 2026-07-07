@@ -35,5 +35,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: UF_Print_Cards_Windows_x64_Python38
-        path: dist/UF_Print_Cards.exe
+        path: dist/UF_Print_Cards_App/
         retention-days: 30
