@@ -1,9 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
-block_cipher = None
-
-# Собираем данные и подмодули PyQt6 принудительно
 pyqt6_datas = collect_data_files('PyQt6')
 pyqt6_hiddenimports = collect_submodules('PyQt6')
 
@@ -19,10 +16,9 @@ a = Analysis(
     excludes=[],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
-    cipher=block_cipher,
     noarchive=False,
 )
-pyz = PYZ(a.pure, a.cipher, block_cipher=a.zipped_data)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
