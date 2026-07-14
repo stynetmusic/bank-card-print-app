@@ -694,6 +694,11 @@ class CardPrintingApp(QMainWindow):
         export_btn = QPushButton("Экспорт в PDF (для печати)")
         export_btn.clicked.connect(self.export_pdf)
         layout.addWidget(export_btn)
+
+        # Commercial offer (КП) button
+        self.btn_kp = QPushButton("Сформировать КП")
+        self.btn_kp.clicked.connect(self.generate_commercial_offer_pdf)
+        layout.addWidget(self.btn_kp)
         
         self.tab_widget.addTab(customer_tab, "Данные заказа")
         
@@ -1064,6 +1069,217 @@ class CardPrintingApp(QMainWindow):
                 error_msg = f"Не удалось создать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
                 logging.error(error_msg)
                 QMessageBox.critical(self, "Ошибка экспорта PDF", error_msg)
+
+    def generate_commercial_offer_pdf(self):
+        """Формирование полноценного PDF-документа коммерческого предложения (КП)"""
+        try:
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.units import mm
+            from reportlab.lib import colors
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+            from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer,
+                                            Table, TableStyle, HRFlowable)
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+            import platform
+
+            # --- Сбор данных о заказе из интерфейса ---
+            customer = self.customer_name.text().strip() or "—"
+            phone = self.customer_phone.text().strip() or "—"
+            email = self.customer_email.text().strip() or "—"
+            company = self.company_name.text().strip() or "—"
+
+            quantity = self.print_quantity.value()
+            print_type = self.print_type.currentText()
+            material = self.paper_type.currentText()
+            lamination = self.lamination.currentText()
+            additional = self.additional_specs.toPlainText().strip()
+
+            # --- Простая прозрачная модель ценообразования ---
+            base_price = {
+                "Цифровая печать": 15.0,
+                "Офсетная печать": 8.0,
+                "УФ печать": 25.0,
+            }.get(print_type, 15.0)
+
+            material_mult = {
+                "Пластик PVC": 1.0,
+                "Пластик PET": 1.2,
+                "Комбинированный": 1.5,
+            }.get(material, 1.0)
+
+            lamination_add = {
+                "Без ламинации": 0.0,
+                "Матовая": 3.0,
+                "Глянцевая": 3.0,
+                "Soft Touch": 6.0,
+            }.get(lamination, 0.0)
+
+            price_per_unit = round((base_price + lamination_add) * material_mult, 2)
+            total = round(price_per_unit * quantity, 2)
+
+            # --- Имя файла КП ---
+            now = datetime.now()
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Сохранить коммерческое предложение",
+                "КП_Заказ.pdf",
+                "PDF файлы (*.pdf)"
+            )
+            if not file_path:
+                return
+            if not file_path.lower().endswith(".pdf"):
+                file_path += ".pdf"
+
+            # Регистрируем шрифт с поддержкой кириллицы (надёжный поиск по ОС)
+            font_name = "Helvetica"
+            local_font = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Arial.ttf")
+            sys_name = platform.system()
+            if sys_name == "Darwin":  # macOS
+                possible_paths = [
+                    "/System/Library/Fonts/Supplemental/Arial.ttf",
+                    "/Library/Fonts/Arial.ttf",
+                    local_font,
+                ]
+            elif sys_name == "Windows":
+                possible_paths = [
+                    "C:\\Windows\\Fonts\\arial.ttf",
+                    local_font,
+                ]
+            else:  # Linux и пр.
+                possible_paths = [
+                    local_font,
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                    "/usr/share/fonts/TTF/DejaVuSans.ttf",
+                ]
+            for path in possible_paths:
+                if os.path.exists(path):
+                    try:
+                        pdfmetrics.registerFont(TTFont("Arial", path))
+                        font_name = "Arial"
+                        break
+                    except Exception as e:
+                        logging.warning(f"Не удалось зарегистрировать шрифт {path}: {e}")
+
+            # --- Стили ---
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle("TitleCyr", parent=styles["Title"],
+                                         fontName=font_name, fontSize=20, leading=24,
+                                         alignment=TA_CENTER, textColor=colors.HexColor("#1a1a2e"))
+            h_style = ParagraphStyle("HeadingCyr", parent=styles["Heading2"],
+                                     fontName=font_name, fontSize=13, leading=16,
+                                     textColor=colors.HexColor("#0f3460"))
+            normal_style = ParagraphStyle("NormalCyr", parent=styles["Normal"],
+                                          fontName=font_name, fontSize=10, leading=14)
+            small_style = ParagraphStyle("SmallCyr", parent=styles["Normal"],
+                                         fontName=font_name, fontSize=8, leading=11,
+                                         textColor=colors.HexColor("#555555"))
+            center_style = ParagraphStyle("CenterCyr", parent=normal_style, alignment=TA_CENTER)
+
+            story = []
+
+            # Шапка
+            story.append(Paragraph("UF Print", ParagraphStyle(
+                "Brand", parent=styles["Normal"], fontName=font_name, fontSize=14,
+                leading=16, textColor=colors.HexColor("#00aa00"), spaceAfter=2)))
+            story.append(Paragraph("Коммерческое предложение", title_style))
+            story.append(Paragraph(f"Дата: {now.strftime('%d.%m.%Y')}", center_style))
+            story.append(Spacer(1, 6))
+            story.append(HRFlowable(width="100%", thickness=1.2, color=colors.HexColor("#00aa00")))
+            story.append(Spacer(1, 10))
+
+            # Данные заказчика
+            story.append(Paragraph("Данные заказчика", h_style))
+            client_data = [
+                ["Заказчик:", customer],
+                ["Организация:", company],
+                ["Телефон:", phone],
+                ["Email:", email],
+            ]
+            client_table = Table(client_data, colWidths=[35 * mm, 140 * mm])
+            client_table.setStyle(TableStyle([
+                ("FONTNAME", (0, 0), (-1, -1), font_name),
+                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ("TEXTCOLOR", (0, 0), (0, -1), colors.HexColor("#0f3460")),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ]))
+            story.append(client_table)
+            story.append(Spacer(1, 12))
+
+            # Таблица позиций
+            story.append(Paragraph("Параметры заказа и стоимость", h_style))
+            story.append(Spacer(1, 4))
+
+            header = ["№", "Наименование услуги", "Кол-во", "Цена за ед., руб.", "Сумма, руб."]
+            rows = [header, [
+                "1",
+                Paragraph(
+                    f"<b>Печать банковских карт</b><br/><font size=8>"
+                    f"Тип печати: {print_type}; Материал: {material}; Ламинация: {lamination}</font>",
+                    normal_style),
+                str(quantity),
+                f"{price_per_unit:,.2f}".replace(",", " "),
+                f"{total:,.2f}".replace(",", " "),
+            ]]
+
+            items_table = Table(rows, colWidths=[10 * mm, 95 * mm, 20 * mm, 30 * mm, 30 * mm],
+                                repeatRows=1)
+            items_table.setStyle(TableStyle([
+                ("FONTNAME", (0, 0), (-1, -1), font_name),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f3460")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("ALIGN", (2, 0), (-1, -1), "RIGHT"),
+                ("ALIGN", (0, 0), (0, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#999999")),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f2f6ff")]),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ]))
+            story.append(items_table)
+            story.append(Spacer(1, 8))
+
+            # Итог
+            story.append(Paragraph(
+                f"Итого к оплате: {total:,.2f} руб.".replace(",", " "),
+                ParagraphStyle("Total", parent=normal_style, alignment=TA_RIGHT, fontSize=12,
+                               textColor=colors.HexColor("#0f3460"))))
+
+            if additional:
+                story.append(Spacer(1, 10))
+                story.append(Paragraph("Дополнительные характеристики / пожелания:", h_style))
+                story.append(Paragraph(additional.replace("\n", "<br/>"), normal_style))
+
+            # Подвал
+            story.append(Spacer(1, 16))
+            story.append(HRFlowable(width="100%", thickness=0.6, color=colors.HexColor("#999999")))
+            story.append(Spacer(1, 6))
+            story.append(Paragraph(
+                "Настоящее коммерческое предложение действительно в течение 14 календарных дней "
+                "с даты выдачи. Окончательная стоимость может быть скорректирована после "
+                "согласования макетов и технических требований. По всем вопросам: UF Print.",
+                small_style))
+
+            # --- Формирование документа ---
+            doc = SimpleDocTemplate(
+                file_path, pagesize=A4,
+                leftMargin=18 * mm, rightMargin=18 * mm,
+                topMargin=16 * mm, bottomMargin=16 * mm,
+                title="Коммерческое предложение",
+                author="UF Print",
+            )
+            doc.build(story)
+
+            QMessageBox.information(self, "Успех", f"Коммерческое предложение сохранено:\n{file_path}")
+
+        except Exception as e:
+            error_msg = f"Не удалось сформировать КП: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logging.error(error_msg)
+            QMessageBox.critical(self, "Ошибка формирования КП", error_msg)
+
 
 def main():
     logging.info("=" * 50)
