@@ -1,0 +1,171 @@
+2026-07-13 16:29:03,662 - INFO - ==================================================
+2026-07-13 16:29:03,667 - INFO - UF Print Application Starting
+2026-07-13 16:29:03,667 - INFO - Version: 2.0 (with zoom, move, eraser fixes)
+2026-07-13 16:29:03,668 - INFO - ==================================================
+2026-07-13 16:29:03,955 - INFO - Eraser control added to layout
+2026-07-13 16:29:03,959 - INFO - Move hint added to layout
+2026-07-13 16:29:03,960 - INFO - Mode controls added to layout
+2026-07-13 16:29:03,960 - INFO - Sync checkbox added to layout
+2026-07-13 16:29:03,962 - INFO - Zoom controls added to layout
+2026-07-13 16:29:04,440 - INFO - Application window shown successfully
+2026-07-13 16:48:57,612 - INFO - ==================================================
+2026-07-13 16:48:57,632 - INFO - UF Print Application Starting
+2026-07-13 16:48:57,633 - INFO - Version: 2.0 (with zoom, move, eraser fixes)
+2026-07-13 16:48:57,633 - INFO - ==================================================
+2026-07-13 16:48:57,934 - INFO - Eraser control added to layout
+2026-07-13 16:48:57,935 - INFO - Move hint added to layout
+2026-07-13 16:48:57,936 - INFO - Mode controls added to layout
+2026-07-13 16:48:57,936 - INFO - Sync checkbox added to layout
+2026-07-13 16:48:57,938 - INFO - Zoom controls added to layout
+2026-07-13 16:48:58,494 - INFO - Application window shown successfully
+2026-07-13 16:49:05,955 - INFO - Original path: C:/Mac/Home/Documents/����_��������/bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:49:05,957 - INFO - Normalized path: C:\Mac\Home\Documents\����_��������\bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:49:05,957 - INFO - Attempting to load image: C:\Mac\Home\Documents\����_��������\bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:49:06,003 - INFO - Image loaded successfully: (1277, 800), mode: RGB
+2026-07-13 16:49:06,052 - INFO - Image displayed successfully
+2026-07-13 16:49:11,818 - INFO - Original path: C:/Mac/Home/Documents/����_��������/bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:49:11,818 - INFO - Normalized path: C:\Mac\Home\Documents\����_��������\bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:49:11,818 - INFO - Attempting to load image: C:\Mac\Home\Documents\����_��������\bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:49:11,818 - INFO - Image loaded successfully: (1277, 800), mode: RGB
+2026-07-13 16:49:11,845 - INFO - Image displayed successfully
+2026-07-13 16:49:32,755 - INFO - Zoom changed to: 0.8
+2026-07-13 16:49:32,756 - INFO - Zoom changed to: 0.8
+2026-07-13 16:49:33,788 - INFO - Sync mode disabled: editing side A only
+2026-07-13 16:49:34,636 - INFO - Zoom changed to: 0.96
+2026-07-13 16:49:34,852 - INFO - Zoom changed to: 1.152
+2026-07-13 16:49:35,337 - INFO - Switched to side B via canvas click
+2026-07-13 16:49:36,318 - INFO - Zoom changed to: 0.6400000000000001
+2026-07-13 16:49:36,536 - INFO - Zoom changed to: 0.5120000000000001
+2026-07-13 16:55:00,788 - INFO - ==================================================
+2026-07-13 16:55:00,792 - INFO - UF Print Application Starting
+2026-07-13 16:55:00,792 - INFO - Version: 2.0 (with zoom, move, eraser fixes)
+2026-07-13 16:55:00,792 - INFO - ==================================================
+2026-07-13 16:55:01,250 - INFO - Eraser control added to layout
+2026-07-13 16:55:01,251 - INFO - Move hint added to layout
+2026-07-13 16:55:01,252 - INFO - Mode controls added to layout
+2026-07-13 16:55:01,252 - INFO - Sync checkbox added to layout
+2026-07-13 16:55:01,252 - INFO - Zoom controls added to layout
+2026-07-13 16:55:01,779 - INFO - Application window shown successfully
+2026-07-13 16:55:23,357 - INFO - Original path: C:/Mac/Home/Documents/����_��������/bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:55:23,359 - INFO - Normalized path: C:\Mac\Home\Documents\����_��������\bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:55:23,359 - INFO - Attempting to load image: C:\Mac\Home\Documents\����_��������\bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:55:23,404 - INFO - Image loaded successfully: (1277, 800), mode: RGB
+2026-07-13 16:55:23,452 - INFO - Image displayed successfully
+2026-07-13 16:55:27,180 - INFO - Original path: C:/Mac/Home/Documents/����_��������/bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:55:27,180 - INFO - Normalized path: C:\Mac\Home\Documents\����_��������\bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:55:27,180 - INFO - Attempting to load image: C:\Mac\Home\Documents\����_��������\bear-cub-nature-forest-ojyf.jpg
+2026-07-13 16:55:27,196 - INFO - Image loaded successfully: (1277, 800), mode: RGB
+2026-07-13 16:55:27,212 - INFO - Image displayed successfully
+2026-07-13 16:55:29,601 - INFO - Sync mode disabled: editing side A only
+2026-07-13 16:55:31,152 - INFO - Zoom changed to: 0.8
+2026-07-13 16:55:31,583 - INFO - Switched to side B via canvas click
+2026-07-13 16:55:32,570 - INFO - Zoom changed to: 1.2
+2026-07-13 22:30:12,626 - INFO - ==================================================
+2026-07-13 22:30:12,629 - INFO - UF Print Application Starting
+2026-07-13 22:30:12,630 - INFO - Version: 2.0 (with zoom, move, eraser fixes)
+2026-07-13 22:30:12,630 - INFO - ==================================================
+2026-07-13 22:30:12,978 - INFO - Eraser control added to layout
+2026-07-13 22:30:12,978 - INFO - Move hint added to layout
+2026-07-13 22:30:12,978 - INFO - Mode controls added to layout
+2026-07-13 22:30:12,994 - INFO - Sync checkbox added to layout
+2026-07-13 22:30:12,994 - INFO - Zoom controls added to layout
+2026-07-13 22:30:13,767 - INFO - Application window shown successfully
+2026-07-14 17:41:39,554 - INFO - ==================================================
+2026-07-14 17:41:39,554 - INFO - UF Print Application Starting
+2026-07-14 17:41:39,554 - INFO - Version: 2.0 (with zoom, move, eraser fixes)
+2026-07-14 17:41:39,554 - INFO - ==================================================
+2026-07-14 17:41:39,789 - INFO - Eraser control added to layout
+2026-07-14 17:41:39,789 - INFO - Move hint added to layout
+2026-07-14 17:41:39,790 - INFO - Mode controls added to layout
+2026-07-14 17:41:39,790 - INFO - Sync checkbox added to layout
+2026-07-14 17:41:39,790 - INFO - Zoom controls added to layout
+2026-07-14 17:41:39,877 - INFO - Application window shown successfully
+2026-07-14 17:46:52,005 - INFO - Original path: /Volumes/T9/картинки для тестов/png-transparent-the-punisher-logo-punisher-stencil-skull-decal-monochrome-head-fictional-character-thumbnail.png
+2026-07-14 17:46:52,005 - INFO - Normalized path: /Volumes/T9/картинки для тестов/png-transparent-the-punisher-logo-punisher-stencil-skull-decal-monochrome-head-fictional-character-thumbnail.png
+2026-07-14 17:46:52,005 - INFO - Attempting to load image: /Volumes/T9/картинки для тестов/png-transparent-the-punisher-logo-punisher-stencil-skull-decal-monochrome-head-fictional-character-thumbnail.png
+2026-07-14 17:46:52,015 - INFO - Image loaded successfully: (360, 483), mode: P
+2026-07-14 17:46:52,015 - INFO - Converting image from P to RGB
+2026-07-14 17:46:52,016 - INFO - Image displayed successfully
+2026-07-14 17:46:56,998 - INFO - Original path: /Volumes/T9/картинки для тестов/png-transparent-the-punisher-logo-punisher-stencil-skull-decal-monochrome-head-fictional-character-thumbnail.png
+2026-07-14 17:46:56,998 - INFO - Normalized path: /Volumes/T9/картинки для тестов/png-transparent-the-punisher-logo-punisher-stencil-skull-decal-monochrome-head-fictional-character-thumbnail.png
+2026-07-14 17:46:56,998 - INFO - Attempting to load image: /Volumes/T9/картинки для тестов/png-transparent-the-punisher-logo-punisher-stencil-skull-decal-monochrome-head-fictional-character-thumbnail.png
+2026-07-14 17:46:56,998 - INFO - Image loaded successfully: (360, 483), mode: P
+2026-07-14 17:46:56,998 - INFO - Converting image from P to RGB
+2026-07-14 17:46:57,000 - INFO - Image displayed successfully
+2026-07-14 17:47:11,038 - INFO - Zoom changed to: 1.2
+2026-07-14 17:47:11,038 - INFO - Zoom changed to: 1.2
+2026-07-14 17:47:12,103 - INFO - Zoom changed to: 0.96
+2026-07-14 17:47:12,103 - INFO - Zoom changed to: 0.96
+2026-07-14 17:47:13,336 - INFO - Sync mode disabled: editing side A only
+2026-07-14 17:47:13,936 - INFO - Switched to side B via canvas click
+2026-07-14 17:47:15,120 - INFO - Zoom changed to: 0.768
+2026-07-14 17:47:15,256 - INFO - Zoom changed to: 0.6144000000000001
+2026-07-14 17:47:16,221 - INFO - Switched to side A via canvas click
+2026-07-14 17:47:17,587 - INFO - Zoom changed to: 1.152
+2026-07-14 17:47:17,737 - INFO - Zoom changed to: 1.3823999999999999
+2026-07-14 18:12:24,271 - INFO - ==================================================
+2026-07-14 18:12:24,271 - INFO - UF Print Application Starting
+2026-07-14 18:12:24,272 - INFO - Version: 2.0 (with zoom, move, eraser fixes)
+2026-07-14 18:12:24,272 - INFO - ==================================================
+2026-07-14 18:12:24,673 - INFO - Eraser control added to layout
+2026-07-14 18:12:24,674 - INFO - Move hint added to layout
+2026-07-14 18:12:24,674 - INFO - Mode controls added to layout
+2026-07-14 18:12:24,674 - INFO - Sync checkbox added to layout
+2026-07-14 18:12:24,675 - INFO - Zoom controls added to layout
+2026-07-14 18:12:24,972 - INFO - Application window shown successfully
+2026-07-14 18:13:44,165 - INFO - Original path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:13:44,165 - INFO - Normalized path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:13:44,165 - INFO - Attempting to load image: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:13:44,192 - INFO - Image loaded successfully: (306, 306), mode: RGB
+2026-07-14 18:13:44,197 - INFO - Image displayed successfully
+2026-07-14 18:13:47,729 - INFO - Original path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:13:47,729 - INFO - Normalized path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:13:47,729 - INFO - Attempting to load image: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:13:47,729 - INFO - Image loaded successfully: (306, 306), mode: RGB
+2026-07-14 18:13:47,730 - INFO - Image displayed successfully
+2026-07-14 18:13:49,807 - INFO - Zoom changed to: 1.2
+2026-07-14 18:13:49,808 - INFO - Zoom changed to: 1.2
+2026-07-14 18:13:49,974 - INFO - Zoom changed to: 1.44
+2026-07-14 18:13:49,974 - INFO - Zoom changed to: 1.44
+2026-07-14 18:13:50,874 - INFO - Zoom changed to: 1.152
+2026-07-14 18:13:50,874 - INFO - Zoom changed to: 1.152
+2026-07-14 18:13:51,024 - INFO - Zoom changed to: 0.9216
+2026-07-14 18:13:51,024 - INFO - Zoom changed to: 0.9216
+2026-07-14 18:13:51,857 - INFO - Sync mode disabled: editing side A only
+2026-07-14 18:13:52,541 - INFO - Switched to side B via canvas click
+2026-07-14 18:13:53,541 - INFO - Zoom changed to: 1.10592
+2026-07-14 18:13:53,691 - INFO - Zoom changed to: 1.327104
+2026-07-14 18:13:56,124 - INFO - Switched to side A via canvas click
+2026-07-14 18:13:57,224 - INFO - Zoom changed to: 0.73728
+2026-07-14 18:13:57,374 - INFO - Zoom changed to: 0.589824
+2026-07-14 18:13:57,574 - INFO - Zoom changed to: 0.47185920000000003
+2026-07-14 18:18:39,186 - INFO - ==================================================
+2026-07-14 18:18:39,186 - INFO - UF Print Application Starting
+2026-07-14 18:18:39,186 - INFO - Version: 2.0 (with zoom, move, eraser fixes)
+2026-07-14 18:18:39,186 - INFO - ==================================================
+2026-07-14 18:18:39,536 - INFO - Eraser control added to layout
+2026-07-14 18:18:39,536 - INFO - Move hint added to layout
+2026-07-14 18:18:39,536 - INFO - Mode controls added to layout
+2026-07-14 18:18:39,537 - INFO - Sync checkbox added to layout
+2026-07-14 18:18:39,538 - INFO - Zoom controls added to layout
+2026-07-14 18:18:39,783 - INFO - Application window shown successfully
+2026-07-14 18:18:49,886 - INFO - Original path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:18:49,886 - INFO - Normalized path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:18:49,886 - INFO - Attempting to load image: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:18:49,916 - INFO - Image loaded successfully: (306, 306), mode: RGB
+2026-07-14 18:18:49,920 - INFO - Image displayed successfully
+2026-07-14 18:18:53,484 - INFO - Original path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:18:53,484 - INFO - Normalized path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:18:53,484 - INFO - Attempting to load image: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-14 18:18:53,485 - INFO - Image loaded successfully: (306, 306), mode: RGB
+2026-07-14 18:18:53,486 - INFO - Image displayed successfully
+2026-07-14 18:18:55,474 - INFO - Sync mode disabled: editing side A only
+2026-07-14 18:18:55,875 - INFO - Switched to side B via canvas click
+2026-07-14 18:18:56,808 - INFO - Zoom changed to: 1.2
+2026-07-14 18:18:59,924 - INFO - Switched to side A via canvas click
+2026-07-14 18:19:03,875 - INFO - Zoom changed to: 0.8
+2026-07-14 18:19:04,058 - INFO - Zoom changed to: 0.6400000000000001
+2026-07-14 18:19:05,291 - INFO - Switched to side B via canvas click
+2026-07-14 18:19:06,175 - INFO - Zoom changed to: 1.44
+2026-07-14 18:19:06,325 - INFO - Zoom changed to: 1.728
+2026-07-14 18:19:06,458 - INFO - Zoom changed to: 2.0736
