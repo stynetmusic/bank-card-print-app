@@ -18,7 +18,6 @@ from PyQt6.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, 
 from PIL import Image, ImageDraw, ImageQt
 import io
 import numpy as np
-import copy
 
 # Setup logging
 logging.basicConfig(
@@ -50,7 +49,6 @@ def pillow_to_qpixmap(pil_img):
 
             data = pil_img.tobytes("raw", "RGBA")
             qimg = QImage(data, pil_img.size[0], pil_img.size[1], QImage.Format.Format_RGBA8888)
-            qimg.bits().setsize(pil_img.size[0] * pil_img.size[1] * 4)
             return QPixmap.fromImage(qimg)
     except Exception as e:
         logging.error(f"Error converting PIL to QPixmap: {e}", exc_info=True)
@@ -172,7 +170,7 @@ class ImageEditor(QWidget):
     
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor(240, 240, 240))
+        painter.fillRect(self.rect(), QColor(37, 37, 56))
         
         if self.image:
             img_width, img_height = self.image.size
@@ -209,7 +207,7 @@ class ImageEditor(QWidget):
                                    self.last_mouse_pos.y() - cursor_size//2, 
                                    cursor_size, cursor_size)
         else:
-            painter.setPen(QPen(QColor(150, 150, 150), 2))
+            painter.setPen(QPen(QColor(166, 173, 200), 2))
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Загрузите изображение\n(87x56mm)")
     
     def mousePressEvent(self, event):
