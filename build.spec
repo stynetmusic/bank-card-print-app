@@ -2,24 +2,24 @@
 from PyInstaller.utils.hooks import collect_dynamic_libs, collect_data_files, collect_all
 import os
 
-pyside_binaries = collect_dynamic_libs('PySide6')
-pyside_datas = collect_data_files('PySide6')
-pyside_hiddenimports = []
+pyqt_binaries = collect_dynamic_libs('PyQt6')
+pyqt_datas = collect_data_files('PyQt6')
+pyqt_hiddenimports = []
 try:
-    _, _, _hidden = collect_all('PySide6')
-    pyside_hiddenimports = _hidden
+    _, _, _hidden = collect_all('PyQt6')
+    pyqt_hiddenimports = _hidden
 except Exception:
     pass
 
 try:
-    import PySide6
-    pyside_root = os.path.dirname(PySide6.__file__)
-    qt_bin_dir = os.path.join(pyside_root, 'Qt', 'bin')
+    import PyQt6
+    pyqt_root = os.path.dirname(PyQt6.__file__)
+    qt_bin_dir = os.path.join(pyqt_root, 'Qt', 'bin')
     if os.path.isdir(qt_bin_dir):
         for entry in os.listdir(qt_bin_dir):
             full_path = os.path.join(qt_bin_dir, entry)
             if os.path.isfile(full_path):
-                pyside_binaries.append((full_path, 'PySide6/Qt/bin'))
+                pyqt_binaries.append((full_path, 'PyQt6/Qt/bin'))
 except Exception:
     pass
 
@@ -30,9 +30,9 @@ for dll_name in ('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll'):
     if os.path.exists(dll_path):
         vc_dlls.append((dll_path, '.'))
 
-datas = [('Arial.ttf', '.')] + pyside_datas
-binaries = pyside_binaries + vc_dlls
-hiddenimports = ['PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtWidgets', 'shiboken6'] + pyside_hiddenimports
+datas = [('Arial.ttf', '.')] + pyqt_datas
+binaries = pyqt_binaries + vc_dlls
+hiddenimports = ['PyQt6.QtCore', 'PyQt6.QtGui', 'PyQt6.QtWidgets'] + pyqt_hiddenimports
 
 a = Analysis(
     ['main.py'],

@@ -1531,8 +1531,9 @@ class CardPrintingApp(QMainWindow):
             else:
                 logging.warning("Arial.ttf not found for КП PDF generation; falling back to default font")
 
-            title_style = ParagraphStyle('KPTitle', parent=styles['Heading1'], fontName='CustomArial', fontSize=18, leading=22, textColor=colors.HexColor("#0066cc"))
-            normal_style = ParagraphStyle('KPNormal', parent=styles['Normal'], fontName='CustomArial', fontSize=10, leading=14)
+            font_name = 'CustomArial' if font_path else 'Helvetica'
+            title_style = ParagraphStyle('KPTitle', parent=styles['Heading1'], fontName=font_name, fontSize=18, leading=22, textColor=colors.HexColor("#0066cc"))
+            normal_style = ParagraphStyle('KPNormal', parent=styles['Normal'], fontName=font_name, fontSize=10, leading=14)
 
             header_data = []
             company_info_text = f"<b>{comp_name}</b><br/>Адрес: {comp_address}<br/>Тел: {comp_phone}"
@@ -1626,7 +1627,6 @@ class CardPrintingApp(QMainWindow):
         if file_path:
             try:
                 from reportlab.lib.pagesizes import mm
-                from reportlab.lib.units import mm
                 from reportlab.platypus import SimpleDocTemplate, Image, PageBreak
                 from reportlab.lib import colors
                 
