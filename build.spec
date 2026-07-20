@@ -2,7 +2,12 @@
 from PyInstaller.utils.hooks import collect_all
 import sys
 
-datas, binaries, hiddenimports = collect_all('PyQt6')
+datas_qt, binaries_qt, hidden_qt = collect_all('PyQt6')
+datas_np, binaries_np, hidden_np = collect_all('numpy')
+
+datas = [('Arial.ttf', '.')] + datas_qt + datas_np
+binaries = binaries_qt + binaries_np
+hiddenimports = hidden_qt + hidden_np
 
 excluded_dlls = {'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll'}
 binaries = [b for b in binaries if b[0].lower() not in excluded_dlls]
@@ -12,7 +17,7 @@ a = Analysis(
     pathex=[],
     binaries=binaries,
     datas=datas,
-    hiddenimports=['numpy'] + hiddenimports,
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
