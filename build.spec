@@ -1,15 +1,17 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules, collect_all
 
 pyqt6_datas = collect_data_files('PyQt6')
 pyqt6_hiddenimports = collect_submodules('PyQt6')
 
+tmp_datas, tmp_binaries, tmp_hiddenimports = collect_all('PySide6')
+
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[],
-    datas=[('Arial.ttf', '.')] + pyqt6_datas,
-    hiddenimports=['PyQt6.QtCore', 'PyQt6.QtGui', 'PyQt6.QtWidgets'] + pyqt6_hiddenimports,
+    binaries=[] + tmp_binaries,
+    datas=[('Arial.ttf', '.')] + pyqt6_datas + tmp_datas,
+    hiddenimports=['PyQt6.QtCore', 'PyQt6.QtGui', 'PyQt6.QtWidgets'] + pyqt6_hiddenimports + tmp_hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
