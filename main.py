@@ -1624,7 +1624,7 @@ class CardPrintingApp(QMainWindow):
         
         if file_path:
             try:
-                from reportlab.lib.pagesizes import mm
+                from reportlab.lib.units import mm
                 from reportlab.platypus import SimpleDocTemplate, Image, PageBreak
                 from reportlab.lib import colors
                 
