@@ -214,3 +214,13 @@
 2026-07-20 17:11:02,399 - INFO - Sync checkbox added to layout
 2026-07-20 17:11:02,399 - INFO - Zoom controls added to layout
 2026-07-20 17:11:02,586 - INFO - Application window shown successfully
+2026-07-20 17:17:30,005 - INFO - ==================================================
+2026-07-20 17:17:30,006 - INFO - UF Print Application Starting
+2026-07-20 17:17:30,006 - INFO - Version: 2.0 (with zoom, move, eraser fixes)
+2026-07-20 17:17:30,006 - INFO - ==================================================
+2026-07-20 17:17:30,280 - INFO - Eraser control added to layout
+2026-07-20 17:17:30,280 - INFO - Move hint added to layout
+2026-07-20 17:17:30,280 - INFO - Mode controls added to layout
+2026-07-20 17:17:30,281 - INFO - Sync checkbox added to layout
+2026-07-20 17:17:30,281 - INFO - Zoom controls added to layout
+2026-07-20 17:17:30,456 - INFO - Application window shown successfully

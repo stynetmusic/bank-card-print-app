@@ -1,18 +1,13 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_all, collect_dynamic_libs
+from PyInstaller.utils.hooks import collect_all
 
-pyside_datas, pyside_binaries, pyside_hiddenimports = collect_all('PySide6')
-shiboken_datas, shiboken_binaries, shiboken_hiddenimports = collect_all('shiboken6')
-
-datas = [('Arial.ttf', '.')] + pyside_datas + shiboken_datas
-binaries = pyside_binaries + shiboken_binaries
-hiddenimports = ['PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtWidgets', 'shiboken6'] + pyside_hiddenimports + shiboken_hiddenimports
+datas, binaries, hiddenimports = collect_all('PySide6')
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=binaries,
-    datas=datas,
+    datas=[('Arial.ttf', '.')] + datas,
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
