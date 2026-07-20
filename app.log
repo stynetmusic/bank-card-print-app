@@ -169,3 +169,48 @@
 2026-07-14 18:19:06,175 - INFO - Zoom changed to: 1.44
 2026-07-14 18:19:06,325 - INFO - Zoom changed to: 1.728
 2026-07-14 18:19:06,458 - INFO - Zoom changed to: 2.0736
+2026-07-20 17:01:59,486 - INFO - ==================================================
+2026-07-20 17:01:59,486 - INFO - UF Print Application Starting
+2026-07-20 17:01:59,486 - INFO - Version: 2.0 (with zoom, move, eraser fixes)
+2026-07-20 17:01:59,487 - INFO - ==================================================
+2026-07-20 17:01:59,761 - INFO - Eraser control added to layout
+2026-07-20 17:01:59,761 - INFO - Move hint added to layout
+2026-07-20 17:01:59,761 - INFO - Mode controls added to layout
+2026-07-20 17:01:59,761 - INFO - Sync checkbox added to layout
+2026-07-20 17:01:59,761 - INFO - Zoom controls added to layout
+2026-07-20 17:01:59,836 - INFO - Application window shown successfully
+2026-07-20 17:02:17,777 - INFO - Original path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-20 17:02:17,778 - INFO - Normalized path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-20 17:02:17,778 - INFO - Attempting to load image: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-20 17:02:17,778 - INFO - Using resolved path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-20 17:02:17,881 - INFO - Image loaded successfully: (306, 306), mode: RGB
+2026-07-20 17:02:17,882 - INFO - Image displayed successfully
+2026-07-20 17:02:22,110 - INFO - Original path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-20 17:02:22,110 - INFO - Normalized path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-20 17:02:22,110 - INFO - Attempting to load image: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-20 17:02:22,110 - INFO - Using resolved path: /Volumes/T9/картинки для тестов/images.jpeg
+2026-07-20 17:02:22,110 - INFO - Image loaded successfully: (306, 306), mode: RGB
+2026-07-20 17:02:22,111 - INFO - Image displayed successfully
+2026-07-20 17:02:26,955 - INFO - Sync mode disabled: editing side A only
+2026-07-20 17:02:28,254 - INFO - Zoom changed to: 0.8
+2026-07-20 17:02:28,422 - INFO - Zoom changed to: 0.6400000000000001
+2026-07-20 17:02:29,020 - INFO - Zoom changed to: 0.7680000000000001
+2026-07-20 17:02:29,171 - INFO - Zoom changed to: 0.9216000000000001
+2026-07-20 17:02:29,620 - INFO - Switched to side B via canvas click
+2026-07-20 17:02:30,504 - INFO - Zoom changed to: 1.2
+2026-07-20 17:02:30,688 - INFO - Zoom changed to: 1.44
+2026-07-20 17:02:31,654 - INFO - Switched to side A via canvas click
+2026-07-20 17:02:33,453 - INFO - Zoom changed to: 0.7372800000000002
+2026-07-20 17:02:33,603 - INFO - Zoom changed to: 0.5898240000000001
+2026-07-20 17:02:33,753 - INFO - Zoom changed to: 0.47185920000000015
+2026-07-20 17:03:35,485 - INFO - Switched to side B via canvas click
+2026-07-20 17:11:02,132 - INFO - ==================================================
+2026-07-20 17:11:02,132 - INFO - UF Print Application Starting
+2026-07-20 17:11:02,132 - INFO - Version: 2.0 (with zoom, move, eraser fixes)
+2026-07-20 17:11:02,132 - INFO - ==================================================
+2026-07-20 17:11:02,399 - INFO - Eraser control added to layout
+2026-07-20 17:11:02,399 - INFO - Move hint added to layout
+2026-07-20 17:11:02,399 - INFO - Mode controls added to layout
+2026-07-20 17:11:02,399 - INFO - Sync checkbox added to layout
+2026-07-20 17:11:02,399 - INFO - Zoom controls added to layout
+2026-07-20 17:11:02,586 - INFO - Application window shown successfully
