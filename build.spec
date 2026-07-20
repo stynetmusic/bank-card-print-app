@@ -1,17 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules, collect_all
+from PyInstaller.utils.hooks import collect_all, collect_dynamic_libs
 
-pyqt6_datas = collect_data_files('PyQt6')
-pyqt6_hiddenimports = collect_submodules('PyQt6')
+pyside_datas, pyside_binaries, pyside_hiddenimports = collect_all('PySide6')
+shiboken_datas, shiboken_binaries, shiboken_hiddenimports = collect_all('shiboken6')
 
-tmp_datas, tmp_binaries, tmp_hiddenimports = collect_all('PySide6')
+datas = [('Arial.ttf', '.')] + pyside_datas + shiboken_datas
+binaries = pyside_binaries + shiboken_binaries
+hiddenimports = ['PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtWidgets', 'shiboken6'] + pyside_hiddenimports + shiboken_hiddenimports
 
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[] + tmp_binaries,
-    datas=[('Arial.ttf', '.')] + pyqt6_datas + tmp_datas,
-    hiddenimports=['PyQt6.QtCore', 'PyQt6.QtGui', 'PyQt6.QtWidgets'] + pyqt6_hiddenimports + tmp_hiddenimports,
+    binaries=binaries,
+    datas=datas,
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
