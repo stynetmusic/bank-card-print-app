@@ -1,8 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
+import os
 
 datas_qt, binaries_qt, hidden_qt = collect_all('PyQt6')
 datas_np, binaries_np, hidden_np = collect_all('numpy')
+
+try:
+    import numpy as np
+    numpy_root = os.path.dirname(np.__file__)
+    numpy_libs_dir = os.path.join(numpy_root, 'libs')
+    if os.path.isdir(numpy_libs_dir):
+        for entry in os.listdir(numpy_libs_dir):
+            full_path = os.path.join(numpy_libs_dir, entry)
+            if os.path.isfile(full_path):
+                binaries_np.append((full_path, 'numpy/libs'))
+except Exception:
+    pass
 
 a = Analysis(
     ['main.py'],
