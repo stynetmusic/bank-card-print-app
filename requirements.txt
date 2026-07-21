@@ -1,4 +1,4 @@
-PyQt6>=6.4,<6.7
+PyQt6==6.6.1
 Pillow>=10.1.0
 reportlab>=4.0.7
 numpy<2.0.0

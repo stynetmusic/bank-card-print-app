@@ -8,7 +8,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=binaries_qt + binaries_np,
-    datas=datas_qt + datas_np,
+    datas=[('Arial.ttf', '.')] + datas_qt + datas_np,
     hiddenimports=hidden_qt + hidden_np + ['PIL', 'reportlab'],
     hookspath=[],
     hooksconfig={},
