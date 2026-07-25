@@ -1,3 +1,8 @@
+env:
+  BUILD_TIMESTAMP: "2026-07-25T18:18:01+03:00"
+  BUILD_TARGET: "Windows7_x64"
+  APP_NAME: "UF_Print_Cards_App"
+
 name: Build Windows EXE (x64) - Python 3.8.10
 
 on:
