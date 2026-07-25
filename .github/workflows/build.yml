@@ -9,16 +9,22 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2019
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
     
+    - name: Install Visual Studio Build Tools with Windows 7.1 SDK
+      run: |
+        choco install visualstudio2019buildtools --package-parameters "'--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive --locale en-US'" -y --no-progress
+        choco install windows-sdk-7.1 -y --no-progress
+    
     - name: Set up Python 3.8.10
       uses: actions/setup-python@v5
       with:
         python-version: '3.8.10'
+        architecture: 'x64'
     
     - name: Install dependencies
       run: |
@@ -31,6 +37,6 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: UF_Print_Cards_Windows_x64_Python38
+        name: UF_Print_Cards_Windows7_x64
         path: dist/UF_Print_Cards_App/
         retention-days: 30
