@@ -1515,6 +1515,7 @@ class CardPrintingApp(QMainWindow):
             base_dir = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
             font_candidates = [
                 os.path.join(base_dir, "Arial.ttf"),
+                os.path.join(base_dir, "_internal", "Arial.ttf"),
                 os.path.join(base_dir, "fonts", "Arial.ttf"),
                 os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "arial.ttf"),
             ]

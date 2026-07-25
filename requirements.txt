@@ -1,5 +1,5 @@
 PyQt6==6.6.1
 numpy<2.0.0
-pillow
+Pillow>=10.1.0
 reportlab
 pyinstaller
