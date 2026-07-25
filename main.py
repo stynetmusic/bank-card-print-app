@@ -1704,6 +1704,24 @@ class CardPrintingApp(QMainWindow):
                 QMessageBox.critical(self, "Ошибка экспорта PDF", error_msg)
 
 def main():
+    try:
+        import ctypes
+        if sys.platform == 'win32':
+            try:
+                ctypes.windll.kernel32.LoadLibraryW('msvcp140.dll')
+                ctypes.windll.kernel32.LoadLibraryW('vcruntime140.dll')
+            except OSError:
+                from PyQt6.QtWidgets import QMessageBox
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Icon.Critical)
+                msg.setWindowTitle("Не найдены системные библиотеки")
+                msg.setText("Для запуска программы требуется Visual C++ Redistributable.")
+                msg.setInformativeText("Установите его из официального источника Microsoft и перезапустите программу.")
+                msg.exec()
+                sys.exit(1)
+    except Exception:
+        pass
+
     logging.info("=" * 50)
     logging.info("UF Print Application Starting")
     logging.info("Version: 2.0 (with zoom, move, eraser fixes)")

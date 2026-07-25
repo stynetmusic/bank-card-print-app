@@ -1,9 +1,29 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 import os
+import sys
 
 datas_qt, binaries_qt, hidden_qt = collect_all('PyQt6')
 datas_np, binaries_np, hidden_np = collect_all('numpy')
+
+try:
+    import PyQt6
+    pyqt_root = os.path.dirname(PyQt6.__file__)
+    qt_bin_dir = os.path.join(pyqt_root, 'Qt', 'bin')
+    if os.path.isdir(qt_bin_dir):
+        for entry in os.listdir(qt_bin_dir):
+            full_path = os.path.join(qt_bin_dir, entry)
+            if os.path.isfile(full_path):
+                binaries_qt.append((full_path, 'PyQt6/Qt/bin'))
+    qt_plugins_dir = os.path.join(pyqt_root, 'Qt', 'plugins')
+    if os.path.isdir(qt_plugins_dir):
+        for root, dirs, files in os.walk(qt_plugins_dir):
+            for file in files:
+                full_path = os.path.join(root, file)
+                rel_root = os.path.relpath(root, pyqt_root)
+                datas_qt.append((full_path, os.path.join(rel_root)))
+except Exception:
+    pass
 
 try:
     import numpy as np
@@ -17,10 +37,18 @@ try:
 except Exception:
     pass
 
+vc_runtime_dlls = []
+if sys.platform == 'win32':
+    system_root = os.environ.get('SystemRoot', 'C:\\Windows')
+    for dll_name in ('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'concrt140.dll'):
+        dll_path = os.path.join(system_root, 'System32', dll_name)
+        if os.path.exists(dll_path):
+            vc_runtime_dlls.append((dll_path, '.'))
+
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=binaries_qt + binaries_np,
+    binaries=binaries_qt + binaries_np + vc_runtime_dlls,
     datas=[('Arial.ttf', '.')] + datas_qt + datas_np,
     hiddenimports=hidden_qt + hidden_np + ['PIL', 'reportlab'],
     hookspath=[],
