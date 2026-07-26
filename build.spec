@@ -1,9 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import sys
 from PyInstaller.utils.hooks import collect_all
 
-# Автоматически собираем все бинарники, данные и скрытые импорты для PyQt5
 qt_data = collect_all('PyQt5')
 
 block_cipher = None
@@ -11,7 +9,7 @@ block_cipher = None
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=qt_v := qt_data['binaries'],
+    binaries=qt_data['binaries'],
     datas=qt_data['datas'],
     hiddenimports=qt_data['hiddenimports'] + ['PyQt5.sip'],
     hookspath=[],
@@ -27,7 +25,7 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
     pyz,
-a.scripts,
+    a.scripts,
     a.binaries,
     a.zipfiles,
     a.datas,
