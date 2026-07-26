@@ -14,22 +14,19 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2019
+    runs-on: windows-latest
+    timeout-minutes: 60
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Install Visual Studio Build Tools with Windows 7.1 SDK
-      run: |
-        choco install visualstudio2019buildtools --package-parameters "'--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive --locale en-US'" -y --no-progress
-        choco install windows-sdk-7.1 -y --no-progress
     
     - name: Set up Python 3.8.10
       uses: actions/setup-python@v5
       with:
         python-version: '3.8.10'
         architecture: 'x64'
+        cache: 'pip'
     
     - name: Install dependencies
       run: |
