@@ -1703,67 +1703,113 @@ class CardPrintingApp(QMainWindow):
                 logging.error(error_msg)
                 QMessageBox.critical(self, "Ошибка экспорта PDF", error_msg)
 
-def main():
+def _get_log_path():
+    try:
+        if getattr(sys, 'frozen', False):
+            app_dir = os.path.dirname(sys.executable)
+        else:
+            app_dir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(app_dir, 'app_debug.log')
+    except Exception:
+        return 'app_debug.log'
+
+
+def _setup_logging():
+    try:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler(_get_log_path(), mode='w', encoding='utf-8'),
+                logging.StreamHandler()
+            ]
+        )
+    except Exception:
+        pass
+
+
+def _show_error(title, text):
     try:
         import ctypes
-        if sys.platform == 'win32':
-            try:
-                ctypes.windll.kernel32.LoadLibraryW('msvcp140.dll')
-                ctypes.windll.kernel32.LoadLibraryW('vcruntime140.dll')
-            except OSError:
-                try:
-                    from PyQt5.QtWidgets import QMessageBox
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Critical)
-                    msg.setWindowTitle("Не найдены системные библиотеки")
-                    msg.setText("Для запуска программы требуется Visual C++ Redistributable.")
-                    msg.setInformativeText("Установите его из официального источника Microsoft и перезапустите программу.")
-                    msg.exec()
-                except Exception:
-                    pass
-                sys.exit(1)
+        ctypes.windll.user32.MessageBoxW(0, text, title, 0x10)
     except Exception:
         pass
 
+
+def _check_vc_runtime():
+    if sys.platform != 'win32':
+        return True
     try:
-        from PyQt5.QtCore import QCoreApplication
-        import os
-        if hasattr(sys, '_MEIPASS'):
-            base_dir = sys._MEIPASS
-            candidates = [
-                os.path.join(base_dir, 'PyQt5', 'Qt', 'plugins'),
-                os.path.join(base_dir, '_internal', 'PyQt5', 'Qt', 'plugins'),
-                os.path.join(base_dir, 'PyQt5', 'plugins'),
-            ]
-            for path in candidates:
-                if os.path.isdir(path):
-                    QCoreApplication.addLibraryPath(path)
-                    break
-            qt_platform_plugin = os.path.join(base_dir, 'PyQt5', 'Qt', 'plugins', 'platforms')
-            if os.path.isdir(qt_platform_plugin):
-                os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = qt_platform_plugin
-    except Exception:
-        pass
+        import ctypes
+        ctypes.windll.kernel32.LoadLibraryW('msvcp140.dll')
+        ctypes.windll.kernel32.LoadLibraryW('vcruntime140.dll')
+        return True
+    except OSError:
+        return False
 
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler('app_debug.log', mode='w', encoding='utf-8'),
-            logging.StreamHandler()
-        ]
-    )
+
+def _setup_qt_plugins():
+    from PyQt5.QtCore import QCoreApplication
+    import os
+    if hasattr(sys, '_MEIPASS'):
+        base_dir = sys._MEIPASS
+    elif getattr(sys, 'frozen', False):
+        base_dir = os.path.dirname(sys.executable)
+    else:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    candidates = [
+        os.path.join(base_dir, 'PyQt5', 'Qt', 'plugins'),
+        os.path.join(base_dir, '_internal', 'PyQt5', 'Qt', 'plugins'),
+        os.path.join(base_dir, 'PyQt5', 'plugins'),
+    ]
+    for path in candidates:
+        if os.path.isdir(path):
+            QCoreApplication.addLibraryPath(path)
+            break
+
+    qt_platform_plugin = os.path.join(base_dir, 'PyQt5', 'Qt', 'plugins', 'platforms')
+    if os.path.isdir(qt_platform_plugin):
+        os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = qt_platform_plugin
+
+
+def main():
+    _setup_logging()
     logging.info("=" * 50)
     logging.info("UF Print Application Starting")
-    logging.info("Version: 2.0 (with zoom, move, eraser fixes)")
+    logging.info(f"Platform: {sys.platform}")
+    logging.info(f"Python: {sys.version}")
+    logging.info(f"Executable: {getattr(sys, 'executable', 'unknown')}")
+    if hasattr(sys, '_MEIPASS'):
+        logging.info(f"MEIPASS: {sys._MEIPASS}")
     logging.info("=" * 50)
-    
+
+    if not _check_vc_runtime():
+        msg = "Для запуска программы требуется Visual C++ Redistributable.\n\nУстановите его из официального источника Microsoft и перезапустите программу."
+        logging.critical("VC++ runtime missing")
+        _show_error("Не найдены системные библиотеки", msg)
+        sys.exit(1)
+
+    try:
+        _setup_qt_plugins()
+    except Exception as e:
+        logging.error(f"Failed to setup Qt plugins: {e}\n{traceback.format_exc()}")
+
+    logging.info("Qt plugins configured, starting application...")
+
     app = QApplication(sys.argv)
     window = CardPrintingApp()
     window.show()
-    
+
     logging.info("Application window shown successfully")
     sys.exit(app.exec())
 
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        _setup_logging()
+        logging.error(f"Fatal error: {str(e)}\n\nTraceback:\n{traceback.format_exc()}")
+        _show_error("Ошибка запуска", f"Не удалось запустить программу:\n\n{str(e)}\n\nПодробности в app_debug.log")
+        sys.exit(1)
