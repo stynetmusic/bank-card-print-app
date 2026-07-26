@@ -1,27 +1,13 @@
 # -*- mode: python ; coding: utf-8 -*-
-import sys
-import os
-import PyQt5
-
-# Получаем путь к установленной библиотеке PyQt5 в окружении
-pyqt5_path = os.path.dirname(PyQt5.__file__)
-qt_plugins_path = os.path.join(pyqt5_path, 'Qt', 'plugins')
-
-added_binaries = []
-if sys.platform == 'win32':
-    # Добавляем необходимые папки с плагинами Qt для корректной работы GUI
-    if os.path.exists(qt_plugins_path):
-        added_binaries.append((os.path.join(qt_plugins_path, 'platforms'), 'PyQt5/Qt/plugins/platforms'))
-        added_binaries.append((os.path.join(qt_plugins_path, 'styles'), 'PyQt5/Qt/plugins/styles'))
 
 block_cipher = None
 
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=added_binaries,
+    binaries=[],
     datas=[],
-    hiddenimports=['PyQt5.sip'],
+    hiddenimports=['PyQt5.sip', 'PyQt5.QtCore', 'PyQt5.QtGui', 'PyQt5.QtWidgets'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
