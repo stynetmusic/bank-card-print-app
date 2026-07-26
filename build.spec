@@ -1,17 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-from PyInstaller.utils.hooks import collect_all
+from PyInstaller.utils.hooks import copy_metadata
 
-qt_data = collect_all('PyQt5')
+datas = []
+# Копируем метаданные для правильной работы PyQt5
+datas += copy_metadata('PyQt5')
 
 block_cipher = None
 
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=qt_data['binaries'],
-    datas=qt_data['datas'],
-    hiddenimports=qt_data['hiddenimports'] + ['PyQt5.sip'],
+    binaries=[],
+    datas=datas,
+    hiddenimports=['PyQt5.sip', 'PyQt5.QtCore', 'PyQt5.QtGui', 'PyQt5.QtWidgets'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
