@@ -15,6 +15,8 @@ try:
             full_path = os.path.join(qt_bin_dir, entry)
             if os.path.isfile(full_path):
                 binaries_qt.append((full_path, 'PyQt5/Qt/bin'))
+                if full_path.lower().endswith('.dll'):
+                    binaries_qt.append((full_path, '.'))
     qt_plugins_dir = os.path.join(pyqt_root, 'Qt', 'plugins')
     if os.path.isdir(qt_plugins_dir):
         for root, dirs, files in os.walk(qt_plugins_dir):

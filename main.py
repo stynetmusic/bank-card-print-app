@@ -45,6 +45,47 @@ def _setup_early_logging():
         pass
 
 
+def _setup_qt_environment():
+    try:
+        if sys.platform != 'win32':
+            return True
+
+        if getattr(sys, 'frozen', False):
+            base_dir = os.path.dirname(sys.executable)
+        elif hasattr(sys, '_MEIPASS'):
+            base_dir = sys._MEIPASS
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        qt_bin = os.path.join(base_dir, 'PyQt5', 'Qt', 'bin')
+        if os.path.isdir(qt_bin):
+            try:
+                os.add_dll_directory(qt_bin)
+            except AttributeError:
+                os.environ['PATH'] = qt_bin + os.pathsep + os.environ.get('PATH', '')
+
+        qt_plugins = os.path.join(base_dir, 'PyQt5', 'Qt', 'plugins')
+        if os.path.isdir(qt_plugins):
+            os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = os.path.join(qt_plugins, 'platforms')
+
+        return True
+    except Exception as e:
+        logging.error(f"Qt environment setup failed: {e}")
+        return False
+
+
+def _check_vc_runtime():
+    if sys.platform != 'win32':
+        return True
+    try:
+        import ctypes
+        ctypes.windll.kernel32.LoadLibraryW('msvcp140.dll')
+        ctypes.windll.kernel32.LoadLibraryW('vcruntime140.dll')
+        return True
+    except OSError:
+        return False
+
+
 _setup_early_logging()
 logging.info("=" * 50)
 logging.info("UF Print Application Starting")
@@ -55,10 +96,21 @@ if hasattr(sys, '_MEIPASS'):
     logging.info(f"MEIPASS: {sys._MEIPASS}")
 logging.info("=" * 50)
 
+if not _check_vc_runtime():
+    logging.critical("VC++ runtime missing")
+    try:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(0, "Visual C++ Redistributable required", "Error", 0x10)
+    except Exception:
+        pass
+    sys.exit(1)
+
+_setup_qt_environment()
+
 try:
-    from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
-                                 QHBoxLayout, QLabel, QPushButton, QFileDialog, 
-                                 QTabWidget, QTextEdit, QLineEdit, QFormLayout, 
+    from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
+                                 QHBoxLayout, QLabel, QPushButton, QFileDialog,
+                                 QTabWidget, QTextEdit, QLineEdit, QFormLayout,
                                  QGroupBox, QSplitter, QScrollArea, QMessageBox,
                                  QSlider, QComboBox, QCheckBox, QSpinBox, QDialog,
                                  QDialogButtonBox, QTableWidget, QTableWidgetItem,
@@ -72,15 +124,6 @@ try:
 except Exception as e:
     logging.error(f"Import failed: {str(e)}\n{traceback.format_exc()}")
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('app.log'),
-        logging.StreamHandler()
-    ]
-)
 
 def pillow_to_qpixmap(pil_img):
     """Convert PIL Image to QPixmap without relying on Qt's built-in image plugins."""
@@ -1756,113 +1799,20 @@ class CardPrintingApp(QMainWindow):
                 logging.error(error_msg)
                 QMessageBox.critical(self, "Ошибка экспорта PDF", error_msg)
 
-def _get_log_path():
-    try:
-        if getattr(sys, 'frozen', False):
-            app_dir = os.path.dirname(sys.executable)
-        else:
-            app_dir = os.path.dirname(os.path.abspath(__file__))
-        return os.path.join(app_dir, 'app_debug.log')
-    except Exception:
-        return 'app_debug.log'
-
-
-def _setup_logging():
-    try:
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(_get_log_path(), mode='w', encoding='utf-8'),
-                logging.StreamHandler()
-            ]
-        )
-    except Exception:
-        pass
-
-
-def _show_error(title, text):
-    try:
-        import ctypes
-        ctypes.windll.user32.MessageBoxW(0, text, title, 0x10)
-    except Exception:
-        pass
-
-
-def _check_vc_runtime():
-    if sys.platform != 'win32':
-        return True
-    try:
-        import ctypes
-        ctypes.windll.kernel32.LoadLibraryW('msvcp140.dll')
-        ctypes.windll.kernel32.LoadLibraryW('vcruntime140.dll')
-        return True
-    except OSError:
-        return False
-
-
-def _setup_qt_plugins():
-    from PyQt5.QtCore import QCoreApplication
-    import os
-    if hasattr(sys, '_MEIPASS'):
-        base_dir = sys._MEIPASS
-    elif getattr(sys, 'frozen', False):
-        base_dir = os.path.dirname(sys.executable)
-    else:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-
-    candidates = [
-        os.path.join(base_dir, 'PyQt5', 'Qt', 'plugins'),
-        os.path.join(base_dir, '_internal', 'PyQt5', 'Qt', 'plugins'),
-        os.path.join(base_dir, 'PyQt5', 'plugins'),
-    ]
-    for path in candidates:
-        if os.path.isdir(path):
-            QCoreApplication.addLibraryPath(path)
-            break
-
-    qt_platform_plugin = os.path.join(base_dir, 'PyQt5', 'Qt', 'plugins', 'platforms')
-    if os.path.isdir(qt_platform_plugin):
-        os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = qt_platform_plugin
-
-
-def main():
-    _setup_logging()
-    logging.info("=" * 50)
-    logging.info("UF Print Application Starting")
-    logging.info(f"Platform: {sys.platform}")
-    logging.info(f"Python: {sys.version}")
-    logging.info(f"Executable: {getattr(sys, 'executable', 'unknown')}")
-    if hasattr(sys, '_MEIPASS'):
-        logging.info(f"MEIPASS: {sys._MEIPASS}")
-    logging.info("=" * 50)
-
-    if not _check_vc_runtime():
-        msg = "Для запуска программы требуется Visual C++ Redistributable.\n\nУстановите его из официального источника Microsoft и перезапустите программу."
-        logging.critical("VC++ runtime missing")
-        _show_error("Не найдены системные библиотеки", msg)
-        sys.exit(1)
-
-    try:
-        _setup_qt_plugins()
-    except Exception as e:
-        logging.error(f"Failed to setup Qt plugins: {e}\n{traceback.format_exc()}")
-
-    logging.info("Qt plugins configured, starting application...")
-
-    app = QApplication(sys.argv)
-    window = CardPrintingApp()
-    window.show()
-
-    logging.info("Application window shown successfully")
-    sys.exit(app.exec())
-
 
 if __name__ == "__main__":
     try:
-        main()
+        app = QApplication(sys.argv)
+        window = CardPrintingApp()
+        window.show()
+        logging.info("Application window shown successfully")
+        sys.exit(app.exec())
     except Exception as e:
-        _setup_logging()
+        _setup_early_logging()
         logging.error(f"Fatal error: {str(e)}\n\nTraceback:\n{traceback.format_exc()}")
-        _show_error("Ошибка запуска", f"Не удалось запустить программу:\n\n{str(e)}\n\nПодробности в app_debug.log")
+        try:
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(0, f"Не удалось запустить программу:\n\n{str(e)}\n\nПодробности в app_debug.log", "Ошибка запуска", 0x10)
+        except Exception:
+            pass
         sys.exit(1)
