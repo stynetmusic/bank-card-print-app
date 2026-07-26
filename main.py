@@ -6,15 +6,15 @@ import logging
 import traceback
 from pathlib import Path
 from datetime import datetime
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QFileDialog, 
                              QTabWidget, QTextEdit, QLineEdit, QFormLayout, 
                              QGroupBox, QSplitter, QScrollArea, QMessageBox,
                              QSlider, QComboBox, QCheckBox, QSpinBox, QDialog,
                              QDialogButtonBox, QTableWidget, QTableWidgetItem,
                              QHeaderView, QFrame)
-from PyQt6.QtCore import Qt, QSize, QTimer, QRect, QPoint, QDir
-from PyQt6.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont, QCursor, QAction
+from PyQt5.QtCore import Qt, QSize, QTimer, QRect, QPoint, QDir
+from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont, QCursor, QAction
 from PIL import Image, ImageDraw, ImageQt
 import io
 import numpy as np
@@ -48,7 +48,7 @@ def pillow_to_qpixmap(pil_img):
             logging.debug(f"ImageQt conversion failed, falling back to raw bytes: {exc}")
 
             data = pil_img.tobytes("raw", "RGBA")
-            qimg = QImage(data, pil_img.size[0], pil_img.size[1], QImage.Format.Format_RGBA8888)
+            qimg = QImage(data, pil_img.size[0], pil_img.size[1], QImage.Format_RGBA8888)
             return QPixmap.fromImage(qimg)
     except Exception as e:
         logging.error(f"Error converting PIL to QPixmap: {e}", exc_info=True)
@@ -190,13 +190,13 @@ class ImageEditor(QWidget):
                 # Convert PIL Image to QPixmap using byte buffer (PyInstaller-safe)
                 pixmap = pillow_to_qpixmap(self.image)
                 if pixmap:
-                    painter.drawPixmap(x, y, pixmap.scaled(display_width, display_height, Qt.AspectRatioMode.KeepAspectRatio))
+                     painter.drawPixmap(x, y, pixmap.scaled(display_width, display_height, Qt.KeepAspectRatio))
                 else:
                     raise Exception("Failed to convert image to QPixmap")
             except Exception as e:
                 logging.error(f"Error drawing image: {e}", exc_info=True)
                 painter.setPen(QPen(QColor(255, 0, 0), 2))
-                painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Ошибка отображения")
+                painter.drawText(self.rect(), Qt.AlignCenter, "Ошибка отображения")
             
             # Draw eraser cursor if in eraser mode
             if self.current_mode == "eraser":
@@ -208,7 +208,7 @@ class ImageEditor(QWidget):
                                    cursor_size, cursor_size)
         else:
             painter.setPen(QPen(QColor(166, 173, 200), 2))
-            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Загрузите изображение\n(87x56mm)")
+            painter.drawText(self.rect(), Qt.AlignCenter, "Загрузите изображение\n(87x56mm)")
     
     def mousePressEvent(self, event):
         if not self.image:
@@ -223,7 +223,7 @@ class ImageEditor(QWidget):
         elif self.current_mode == "move":
             self.dragging = True
             self.last_mouse_pos = event.pos()
-            self.setCursor(QCursor(Qt.CursorShape.ClosedHandCursor))
+            self.setCursor(QCursor(Qt.ClosedHandCursor))
     
     def mouseMoveEvent(self, event):
         self.last_mouse_pos = event.pos()
@@ -231,7 +231,7 @@ class ImageEditor(QWidget):
         if not self.image:
             return
             
-        if self.current_mode == "eraser" and event.buttons() & Qt.MouseButton.LeftButton:
+        if self.current_mode == "eraser" and event.buttons() & Qt.LeftButton:
             self.apply_eraser(event.pos())
         elif self.current_mode == "move" and self.dragging:
             delta = event.pos() - self.last_mouse_pos
@@ -250,7 +250,7 @@ class ImageEditor(QWidget):
     def mouseReleaseEvent(self, event):
         if self.current_mode == "move":
             self.dragging = False
-            self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
+            self.setCursor(QCursor(Qt.ArrowCursor))
             # Notify parent to save to history after move
             if self.history_callback:
                 self.history_callback()
@@ -262,19 +262,19 @@ class ImageEditor(QWidget):
         key = event.key()
         step = 10
         
-        if key == Qt.Key.Key_Left:
+        if key == Qt.Key_Left:
             self.offset_x -= step
             if self.position_callback:
                 self.position_callback(-step, 0)
-        elif key == Qt.Key.Key_Right:
+        elif key == Qt.Key_Right:
             self.offset_x += step
             if self.position_callback:
                 self.position_callback(step, 0)
-        elif key == Qt.Key.Key_Up:
+        elif key == Qt.Key_Up:
             self.offset_y -= step
             if self.position_callback:
                 self.position_callback(0, -step)
-        elif key == Qt.Key.Key_Down:
+        elif key == Qt.Key_Down:
             self.offset_y += step
             if self.position_callback:
                 self.position_callback(0, step)
@@ -647,7 +647,7 @@ class CardPrintingApp(QMainWindow):
         # Header
         header = QLabel("UF PRINT - СИСТЕМА ДЛЯ ПЕЧАТИ БАНКОВСКИХ КАРТ")
         header.setStyleSheet("font-size: 24px; font-weight: bold; color: #89b4fa; padding: 10px;")
-        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        header.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(header)
         
         # Tab widget
@@ -1186,14 +1186,14 @@ class CardPrintingApp(QMainWindow):
         
         # Set cursor
         if mode == "Ластик":
-            self.side_a_editor.setCursor(QCursor(Qt.CursorShape.CrossCursor))
-            self.side_b_editor.setCursor(QCursor(Qt.CursorShape.CrossCursor))
+            self.side_a_editor.setCursor(QCursor(Qt.CrossCursor))
+            self.side_b_editor.setCursor(QCursor(Qt.CrossCursor))
         elif mode == "Перемещение":
-            self.side_a_editor.setCursor(QCursor(Qt.CursorShape.OpenHandCursor))
-            self.side_b_editor.setCursor(QCursor(Qt.CursorShape.OpenHandCursor))
+            self.side_a_editor.setCursor(QCursor(Qt.OpenHandCursor))
+            self.side_b_editor.setCursor(QCursor(Qt.OpenHandCursor))
         else:
-            self.side_a_editor.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
-            self.side_b_editor.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
+            self.side_a_editor.setCursor(QCursor(Qt.ArrowCursor))
+            self.side_b_editor.setCursor(QCursor(Qt.ArrowCursor))
     
     def change_eraser_size(self, size):
         self.side_a_editor.eraser_size = size
@@ -1711,7 +1711,7 @@ def main():
                 ctypes.windll.kernel32.LoadLibraryW('msvcp140.dll')
                 ctypes.windll.kernel32.LoadLibraryW('vcruntime140.dll')
             except OSError:
-                from PyQt6.QtWidgets import QMessageBox
+                from PyQt5.QtWidgets import QMessageBox
                 msg = QMessageBox()
                 msg.setIcon(QMessageBox.Icon.Critical)
                 msg.setWindowTitle("Не найдены системные библиотеки")

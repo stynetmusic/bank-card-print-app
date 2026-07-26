@@ -3,18 +3,18 @@ from PyInstaller.utils.hooks import collect_all
 import os
 import sys
 
-datas_qt, binaries_qt, hidden_qt = collect_all('PyQt6')
+datas_qt, binaries_qt, hidden_qt = collect_all('PyQt5')
 datas_np, binaries_np, hidden_np = collect_all('numpy')
 
 try:
-    import PyQt6
-    pyqt_root = os.path.dirname(PyQt6.__file__)
+    import PyQt5
+    pyqt_root = os.path.dirname(PyQt5.__file__)
     qt_bin_dir = os.path.join(pyqt_root, 'Qt', 'bin')
     if os.path.isdir(qt_bin_dir):
         for entry in os.listdir(qt_bin_dir):
             full_path = os.path.join(qt_bin_dir, entry)
             if os.path.isfile(full_path):
-                binaries_qt.append((full_path, 'PyQt6/Qt/bin'))
+                binaries_qt.append((full_path, 'PyQt5/Qt/bin'))
     qt_plugins_dir = os.path.join(pyqt_root, 'Qt', 'plugins')
     if os.path.isdir(qt_plugins_dir):
         for root, dirs, files in os.walk(qt_plugins_dir):
@@ -54,7 +54,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['PySide6', 'tkinter'],
+    excludes=['PyQt6', 'PySide6', 'tkinter'],
     noarchive=False,
 )
 
