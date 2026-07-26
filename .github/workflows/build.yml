@@ -24,10 +24,10 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller --noconfirm --onedir --windowed main.spec
+        pyinstaller main.spec
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: UF_Print_Cards_App
-        path: dist/    
+        path: dist/
