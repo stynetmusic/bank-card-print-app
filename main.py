@@ -1713,12 +1713,22 @@ def main():
             except OSError:
                 from PyQt5.QtWidgets import QMessageBox
                 msg = QMessageBox()
-                msg.setIcon(QMessageBox.Icon.Critical)
+                msg.setIcon(QMessageBox.Critical)
                 msg.setWindowTitle("Не найдены системные библиотеки")
                 msg.setText("Для запуска программы требуется Visual C++ Redistributable.")
                 msg.setInformativeText("Установите его из официального источника Microsoft и перезапустите программу.")
                 msg.exec()
                 sys.exit(1)
+    except Exception:
+        pass
+
+    try:
+        from PyQt5.QtCore import QCoreApplication
+        import os
+        if hasattr(sys, '_MEIPASS'):
+            qt_plugins = os.path.join(sys._MEIPASS, 'PyQt5', 'Qt', 'plugins')
+            if os.path.isdir(qt_plugins):
+                QCoreApplication.addLibraryPath(qt_plugins)
     except Exception:
         pass
 
