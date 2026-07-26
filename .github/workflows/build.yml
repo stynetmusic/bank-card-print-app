@@ -1,47 +1,33 @@
-env:
-  BUILD_TIMESTAMP: "2026-07-25T18:18:01+03:00"
-  BUILD_TARGET: "Windows7_x64"
-  APP_NAME: "UF_Print_Cards_App"
-
-name: Build Windows EXE (x64) - Python 3.8.10
+name: Build Windows EXE (x64)
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   build:
-   runs-on: windows-latest
-    
+    runs-on: windows-latest
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Install Visual Studio Build Tools with Windows 7.1 SDK
-      run: |
-        choco install visualstudio2019buildtools --package-parameters "'--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive --locale en-US'" -y --no-progress
-        choco install windows-sdk-7.1 -y --no-progress
-    
-    - name: Set up Python 3.8.10
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.8.10'
-        architecture: 'x64'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    
-    - name: Build EXE
-      run: pyinstaller --noconfirm build.spec
-    
+        pip install pyinstaller
+
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller --noconfirm --onedir --windowed main.spec
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: UF_Print_Cards_Windows7_x64
-        path: dist/UF_Print_Cards_App/
-        retention-days: 30
+        name: UF_Print_Cards_App
+        path: dist/    
