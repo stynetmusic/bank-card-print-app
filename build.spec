@@ -1,11 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
+import PyQt5
+
+pyqt5_dir = os.path.dirname(PyQt5.__file__)
+qt_plugins_path = os.path.join(pyqt5_dir, 'Qt', 'plugins')
+
+extra_binaries = []
+if os.path.exists(qt_plugins_path):
+    extra_binaries.append((os.path.join(qt_plugins_path, 'platforms'), 'PyQt5/Qt/plugins/platforms'))
+
 block_cipher = None
 
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[],
+    binaries=extra_binaries,
     datas=[],
     hiddenimports=['PyQt5.sip', 'PyQt5.QtCore', 'PyQt5.QtGui', 'PyQt5.QtWidgets'],
     hookspath=[],
