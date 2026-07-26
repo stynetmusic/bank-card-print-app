@@ -1711,13 +1711,16 @@ def main():
                 ctypes.windll.kernel32.LoadLibraryW('msvcp140.dll')
                 ctypes.windll.kernel32.LoadLibraryW('vcruntime140.dll')
             except OSError:
-                from PyQt5.QtWidgets import QMessageBox
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Critical)
-                msg.setWindowTitle("Не найдены системные библиотеки")
-                msg.setText("Для запуска программы требуется Visual C++ Redistributable.")
-                msg.setInformativeText("Установите его из официального источника Microsoft и перезапустите программу.")
-                msg.exec()
+                try:
+                    from PyQt5.QtWidgets import QMessageBox
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.setWindowTitle("Не найдены системные библиотеки")
+                    msg.setText("Для запуска программы требуется Visual C++ Redistributable.")
+                    msg.setInformativeText("Установите его из официального источника Microsoft и перезапустите программу.")
+                    msg.exec()
+                except Exception:
+                    pass
                 sys.exit(1)
     except Exception:
         pass
@@ -1726,12 +1729,30 @@ def main():
         from PyQt5.QtCore import QCoreApplication
         import os
         if hasattr(sys, '_MEIPASS'):
-            qt_plugins = os.path.join(sys._MEIPASS, 'PyQt5', 'Qt', 'plugins')
-            if os.path.isdir(qt_plugins):
-                QCoreApplication.addLibraryPath(qt_plugins)
+            base_dir = sys._MEIPASS
+            candidates = [
+                os.path.join(base_dir, 'PyQt5', 'Qt', 'plugins'),
+                os.path.join(base_dir, '_internal', 'PyQt5', 'Qt', 'plugins'),
+                os.path.join(base_dir, 'PyQt5', 'plugins'),
+            ]
+            for path in candidates:
+                if os.path.isdir(path):
+                    QCoreApplication.addLibraryPath(path)
+                    break
+            qt_platform_plugin = os.path.join(base_dir, 'PyQt5', 'Qt', 'plugins', 'platforms')
+            if os.path.isdir(qt_platform_plugin):
+                os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = qt_platform_plugin
     except Exception:
         pass
 
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('app_debug.log', mode='w', encoding='utf-8'),
+            logging.StreamHandler()
+        ]
+    )
     logging.info("=" * 50)
     logging.info("UF Print Application Starting")
     logging.info("Version: 2.0 (with zoom, move, eraser fixes)")
