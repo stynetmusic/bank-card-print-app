@@ -6,18 +6,71 @@ import logging
 import traceback
 from pathlib import Path
 from datetime import datetime
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
-                             QHBoxLayout, QLabel, QPushButton, QFileDialog, 
-                             QTabWidget, QTextEdit, QLineEdit, QFormLayout, 
-                             QGroupBox, QSplitter, QScrollArea, QMessageBox,
-                             QSlider, QComboBox, QCheckBox, QSpinBox, QDialog,
-                             QDialogButtonBox, QTableWidget, QTableWidgetItem,
-                             QHeaderView, QFrame)
-from PyQt5.QtCore import Qt, QSize, QTimer, QRect, QPoint, QDir
-from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont, QCursor, QAction
-from PIL import Image, ImageDraw, ImageQt
-import io
-import numpy as np
+
+
+def _get_log_paths():
+    paths = []
+    try:
+        if getattr(sys, 'frozen', False):
+            app_dir = os.path.dirname(sys.executable)
+        else:
+            app_dir = os.path.dirname(os.path.abspath(__file__))
+        paths.append(os.path.join(app_dir, 'app_debug.log'))
+    except Exception:
+        pass
+    try:
+        temp_dir = os.environ.get('TEMP', '/tmp')
+        paths.append(os.path.join(temp_dir, 'app_debug.log'))
+    except Exception:
+        pass
+    return paths
+
+
+def _setup_early_logging():
+    try:
+        log_paths = _get_log_paths()
+        handlers = []
+        for path in log_paths:
+            try:
+                handlers.append(logging.FileHandler(path, mode='w', encoding='utf-8'))
+            except Exception:
+                pass
+        handlers.append(logging.StreamHandler())
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=handlers
+        )
+    except Exception:
+        pass
+
+
+_setup_early_logging()
+logging.info("=" * 50)
+logging.info("UF Print Application Starting")
+logging.info(f"Platform: {sys.platform}")
+logging.info(f"Python: {sys.version}")
+logging.info(f"Executable: {getattr(sys, 'executable', 'unknown')}")
+if hasattr(sys, '_MEIPASS'):
+    logging.info(f"MEIPASS: {sys._MEIPASS}")
+logging.info("=" * 50)
+
+try:
+    from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+                                 QHBoxLayout, QLabel, QPushButton, QFileDialog, 
+                                 QTabWidget, QTextEdit, QLineEdit, QFormLayout, 
+                                 QGroupBox, QSplitter, QScrollArea, QMessageBox,
+                                 QSlider, QComboBox, QCheckBox, QSpinBox, QDialog,
+                                 QDialogButtonBox, QTableWidget, QTableWidgetItem,
+                                 QHeaderView, QFrame)
+    from PyQt5.QtCore import Qt, QSize, QTimer, QRect, QPoint, QDir
+    from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainter, QColor, QPen, QBrush, QFont, QCursor, QAction
+    from PIL import Image, ImageDraw, ImageQt
+    import io
+    import numpy as np
+    logging.info("All imports completed successfully")
+except Exception as e:
+    logging.error(f"Import failed: {str(e)}\n{traceback.format_exc()}")
 
 # Setup logging
 logging.basicConfig(
