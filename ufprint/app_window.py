@@ -5,8 +5,9 @@ import traceback
 from datetime import datetime
 
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QAction, QCursor
+from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import (
+    QAction,
     QComboBox,
     QCheckBox,
     QDialog,
