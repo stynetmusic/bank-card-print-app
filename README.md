@@ -32,9 +32,10 @@
 ### Вариант 1: Готовая сборка из GitHub Actions (рекомендуется)
 
 1. Скачайте артефакт **`UF_Print_Cards_Windows7_x64`** из Actions (workflow *Build Windows 7 x64 EXE*)
-2. Распакуйте **всю** папку `UF_Print_Cards_App` (рядом с `.exe` должна быть `_internal`)
-3. Запустите `UF_Print_Cards_App.exe` (возможно подтверждение SmartScreen)
-4. Не собирайте Windows `.exe` на Mac — только через Actions или на Windows x64 (см. `WINDOWS_BUILD_GUIDE.md`)
+2. Распакуйте **всю** папку `UF_Print_Cards_App` (exe и DLL рядом; в сборке PyInstaller 4.x папки `_internal` нет)
+3. Установите [Visual C++ Redistributable x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) (на Win7 также UCRT KB2999226 при необходимости)
+4. Запустите `UF_Print_Cards_App.exe` (возможно подтверждение SmartScreen)
+5. Не собирайте Windows `.exe` на Mac — только через Actions или на Windows x64 (см. `WINDOWS_BUILD_GUIDE.md`)
 
 ### Вариант 2: Компиляция из исходного кода (только Windows x64)
 

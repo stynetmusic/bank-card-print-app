@@ -1,4 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
+"""PyInstaller onedir spec — Win7 x64 compatible packaging.
+
+Critical: do NOT ship ucrtbase / api-ms-win-* / MSVC CRT DLLs collected from a
+windows-2022 build host. Those binaries import GetSystemTimePreciseAsFileTime
+(Win8+). On Win7 the loader prefers the app directory and dies before Python
+starts. Target machines should install VC++ Redistributable x64 (+ UCRT update).
+"""
 from PyInstaller.utils.hooks import collect_all
 import os
 import sys
@@ -13,10 +20,9 @@ try:
     if os.path.isdir(qt_bin_dir):
         for entry in os.listdir(qt_bin_dir):
             full_path = os.path.join(qt_bin_dir, entry)
-            if os.path.isfile(full_path):
+            if os.path.isfile(full_path) and full_path.lower().endswith('.dll'):
+                # Keep Qt DLLs under the Qt tree only (avoid duplicating CRT into ".")
                 binaries_qt.append((full_path, 'PyQt5/Qt/bin'))
-                if full_path.lower().endswith('.dll'):
-                    binaries_qt.append((full_path, '.'))
     qt_plugins_dir = os.path.join(pyqt_root, 'Qt', 'plugins')
     if os.path.isdir(qt_plugins_dir):
         for root, dirs, files in os.walk(qt_plugins_dir):
@@ -39,13 +45,34 @@ try:
 except Exception:
     pass
 
+# Do NOT pull MSVC/UCRT from the build host System32 (Win2022 copies break Win7).
 vc_runtime_dlls = []
-if sys.platform == 'win32':
-    system_root = os.environ.get('SystemRoot', 'C:\\Windows')
-    for dll_name in ('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'concrt140.dll'):
-        dll_path = os.path.join(system_root, 'System32', dll_name)
-        if os.path.exists(dll_path):
-            vc_runtime_dlls.append((dll_path, '.'))
+
+WIN7_FORBIDDEN_EXACT = {
+    'ucrtbase.dll',
+    'ucrtbased.dll',
+    'msvcp140.dll',
+    'msvcp140_1.dll',
+    'msvcp140_2.dll',
+    'vcruntime140.dll',
+    'vcruntime140_1.dll',
+    'concrt140.dll',
+    'vccorlib140.dll',
+    # collect_all noise unrelated to this app
+    'libpq.dll',
+}
+
+
+def _keep_binary(toc_entry):
+    """Filter TOC binary entries that break Windows 7 when taken from Win2022."""
+    dest_name = toc_entry[0]
+    base = os.path.basename(dest_name).lower()
+    if base in WIN7_FORBIDDEN_EXACT:
+        return False
+    if base.startswith('api-ms-win-'):
+        return False
+    return True
+
 
 a = Analysis(
     ['main.py'],
@@ -73,6 +100,8 @@ a = Analysis(
     noarchive=False,
 )
 
+a.binaries = [b for b in a.binaries if _keep_binary(b)]
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
@@ -84,7 +113,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -99,7 +128,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='UF_Print_Cards_App',
 )

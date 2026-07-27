@@ -91,14 +91,20 @@ Also: `active_editors()`, `capture_state()`, shared `erase_at()`, hard-fail on f
 
 ---
 
-## 4. Current CI status (as of handoff write-up)
+## 4. Current CI status
 
-**Green.** Successful run: https://github.com/stynetmusic/bank-card-print-app/actions/runs/30266329379  
+**Latest Win7 failure (after “green” artifact):** same  
+`GetSystemTimePreciseAsFileTime` / `KERNEL32.dll` on customer Win7.
 
-- Artifact: **`UF_Print_Cards_Windows7_x64`** (~124 MB) — download from that run’s Artifacts section  
-- Earlier: `windows-2019` queue forever (cancelled); then a failed sanity check (`PyQt5.QtCore` attribute) — both fixed on this branch  
+**Root cause (confirmed by inspecting the artifact):**  
+PyInstaller **4.10 bootloader / python38.dll are fine**. The bundle included **CRT/API-set DLLs copied from the windows-2022 build host** (`MSVCP140.dll`, `ucrtbase.dll`, `api-ms-win-*.dll`). Win7 loads those from the app folder first → hard import of a Win8+ API → instant dialog.
 
-**Next for humans:** download the folder, smoke-test on **Win7 x64**, then merge PR #1.  
+**Fix on this branch (follow-up commit):**  
+- `build.spec` strips those DLLs; no longer copies System32 CRT from the host  
+- CI **Win7 guard** fails the job if those DLLs reappear  
+- Docs: install **VC++ Redistributable x64** (+ UCRT KB2999226 on bare Win7) on the target  
+
+Re-download the **new** artifact after CI is green again — discard the previous ~124 MB zip.  
 
 ---
 
@@ -140,10 +146,10 @@ pytest
 
 ### P0 — unblock ship
 
-1. **Fix CI PyQt5 version check** in `.github/workflows/build.yml` (see §4).  
-2. **Green Actions build** → publish artifact.  
-3. **Win7 x64 smoke test** of that artifact (start + PDF framing).  
-4. Only then **merge PR #1 → `main`**.
+1. ~~Fix CI PyQt5 version check~~ / ~~first green build~~  
+2. ~~Strip Win2022 CRT from bundle~~ (GetSystemTimePreciseAsFileTime) — in progress on branch  
+3. **Win7 x64 smoke test** of the **new** artifact (after CRT strip + VC++ redist on machine)  
+4. Only then **merge PR #1 → `main`**.  
 
 ### P1 — product / reliability (from code review advisories)
 

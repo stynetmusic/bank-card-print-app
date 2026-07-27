@@ -5,8 +5,11 @@
 - **Нельзя** собрать рабочий Windows `.exe` на Mac. PyInstaller **не** умеет кросс-компиляцию.
 - Редактируйте код на Mac; собирайте только через **GitHub Actions** (ниже) или на реальной Windows / VM **x64**.
 - Целевой минимум: **Windows 7 SP1 x64**. Тот же артефакт подходит для Windows 10/11 x64.
-- Клиенту нужна вся папка `UF_Print_Cards_App` (exe + `_internal`), а не один файл exe.
-- На целевой машине желателен [Visual C++ Redistributable x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist).
+- Клиенту нужна вся папка `UF_Print_Cards_App` (exe + зависимости рядом; в PyInstaller 4.x нет `_internal`).
+- На целевой машине **обязательно**:
+  1. [Visual C++ Redistributable x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) (VS 2015–2022)
+  2. На чистом Win7 — также обновление **Universal C Runtime** (KB2999226), если ещё не стоит
+- Сборка на `windows-2022` **не должна** класть в артефакт `ucrtbase.dll` / `api-ms-win-*` / `msvcp140.dll` с хоста — они тянут `GetSystemTimePreciseAsFileTime` и ломают Win7.
 
 ## Зафиксированный стек
 
