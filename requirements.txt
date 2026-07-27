@@ -1,5 +1,6 @@
+# Win7 x64 baseline — keep in sync with .github/workflows/build.yml
 PyQt5==5.15.4
 numpy<1.24.0
-Pillow>=10.1.0
-reportlab
+Pillow>=10.1.0,<11
+reportlab>=3.6.0,<4
 pyinstaller==4.10

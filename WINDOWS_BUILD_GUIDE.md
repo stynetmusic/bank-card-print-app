@@ -1,138 +1,61 @@
-# Инструкция по компиляции под Windows (для Mac M1 пользователей)
+# Сборка Windows EXE (минимум: Windows 7 x64)
 
-Так как вы используете Mac M1, вы не можете напрямую скомпилировать .exe для Windows. 
-Вот несколько вариантов получения готового .exe файла:
+## Важно
 
-## Вариант 1: Использование онлайн-сервисов (самый простой)
+- **Нельзя** собрать рабочий Windows `.exe` на Mac. PyInstaller **не** умеет кросс-компиляцию.
+- Редактируйте код на Mac; собирайте только через **GitHub Actions** (ниже) или на реальной Windows / VM **x64**.
+- Целевой минимум: **Windows 7 SP1 x64**. Тот же артефакт подходит для Windows 10/11 x64.
+- Клиенту нужна вся папка `UF_Print_Cards_App` (exe + зависимости рядом; в PyInstaller 4.x нет `_internal`).
+- На целевой машине **обязательно**:
+  1. [Visual C++ Redistributable x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) (VS 2015–2022)
+  2. На чистом Win7 — также обновление **Universal C Runtime** (KB2999226), если ещё не стоит
+- Сборка на `windows-2022` **не должна** класть в артефакт `ucrtbase.dll` / `api-ms-win-*` / `msvcp140.dll` с хоста — они тянут `GetSystemTimePreciseAsFileTime` и ломают Win7.
 
-### GitHub Actions (бесплатно)
-1. Загрузите код на GitHub
-2. Создайте файл `.github/workflows/build.yml`:
-```yaml
-name: Build Windows EXE
+## Зафиксированный стек
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+| Компонент | Версия | Зачем |
+|-----------|--------|--------|
+| GitHub runner | `windows-2022` | `windows-2019` снят GitHub (2025); Win7 даёт стек Python/Qt, не ОС раннера |
+| Python | **3.8.10 x64** | Практичный потолок для Win7 |
+| GUI | **PyQt5==5.15.4** | PyQt6 / новый Qt часто ломается на Win7 |
+| Bundler | **pyinstaller==4.10** | Без `GetSystemTimePreciseAsFileTime` (Win8+) |
+| Прочее | `requirements.txt` | `numpy<1.24`, Pillow, reportlab |
 
-jobs:
-  build:
-    runs-on: windows-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
-      run: |
-        pip install PyQt6 Pillow reportlab pyinstaller
-    
-    - name: Build EXE
-      run: |
-        pyinstaller --onefile --windowed --name UF_Print_Cards main.py
-    
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: UF_Print_Cards_EXE
-        path: dist/UF_Print_Cards.exe
-```
-3. Запустите workflow вручную или сделайте push
-4. Скачайте готовый .exe из раздела Artifacts
+Единственный spec: **`build.spec`** (onedir → `dist/UF_Print_Cards_App/`).
 
-## Вариант 2: Виртуальная машина Windows на Mac
+## Вариант 1: GitHub Actions (рекомендуется)
 
-### Установка Windows на Mac M1
+Workflow уже в репозитории: `.github/workflows/build.yml`.
 
-1. **Parallels Desktop** (платно, но надежно)
-   - Скачайте Parallels Desktop для Mac
-   - Установите Windows 11 ARM
-   - Запустите Windows и следуйте инструкциям ниже
+1. Push в `main` / `master` или запустите **Actions → Build Windows 7 x64 EXE → Run workflow**.
+2. Дождитесь зелёного прогона.
+3. Скачайте артефакт **`UF_Print_Cards_Windows7_x64`**.
+4. Распакуйте и отдайте клиенту **всю** папку `UF_Print_Cards_App`.
 
-2. **VMware Fusion** (бесплатно для личного использования)
-   - Скачайте VMware Fusion Tech Preview
-   - Установите Windows 11 ARM
-   - Запустите Windows и следуйте инструкциям ниже
+## Вариант 2: Локальная сборка на Windows x64
 
-3. **UTM** (бесплатно, open-source)
-   - Скачайте UTM с https://mac.getutm.app/
-   - Создайте новую виртуальную машину Windows 11 ARM
-   - Запустите и следуйте инструкциям ниже
+Только на **Windows x64** (не ARM-only VM, если клиент на Intel/AMD Win7).
 
-### Компиляция внутри виртуальной машины Windows
-
-После установки Windows ARM:
-
-1. Откройте терминал или PowerShell в Windows
-
-2. Установите Python:
-```bash
-winget install Python.Python.3.11
+```bat
+py -3.8 -m pip install --upgrade "pip<25" "setuptools<70" wheel
+py -3.8 -m pip install -r requirements.txt
+py -3.8 -m PyInstaller --noconfirm build.spec
 ```
 
-3. Перезагрузите терминал
+Результат: `dist\UF_Print_Cards_App\`.
 
-4. Перейдите в папку с проектом (смонтируйте Mac папку или скопируйте файлы)
+Не используйте `pyinstaller --onefile ...` и не ставьте PyQt6 / Python 3.11+ для Win7-сборки.
 
-5. Установите зависимости:
-```bash
-pip install PyQt6 Pillow reportlab pyinstaller
-```
+## Типичные ошибки на Win7
 
-6. Скомпилируйте .exe:
-```bash
-pyinstaller --onefile --windowed --name UF_Print_Cards main.py
-```
+| Сообщение | Причина |
+|-----------|---------|
+| `GetSystemTimePreciseAsFileTime` / `KERNEL32.dll` | Слишком новый Python или PyInstaller (>4.10) |
+| `DLL load failed … QtWidgets` / «Не найдена указанная процедура» | PyQt6 / несовместимый Qt или смесь PyQt5/6 |
+| «Невозможно запустить это приложение на вашем ПК» | Неверный бинарник (не x64, битый архив, сборка не с Windows) |
 
-7. Готовый файл будет в папке `dist`
+## Проверка
 
-**Примечание**: Windows ARM версия .exe будет работать только на Windows ARM, 
-но большинство современных приложений Python работают корректно.
-
-## Вариант 3: Использование Windows в облаке
-
-### Azure DevOps (бесплатные кредиты)
-1. Зарегистрируйтесь на https://dev.azure.com/
-2. Создайте проект и репозиторий
-3. Загрузите код
-4. Настройте pipeline для сборки Windows .exe
-5. Скачайте готовый артефакт
-
-### Другие облачные сервисы
-- AWS EC2 (Windows Server)
-- Google Cloud Compute Engine
-- DigitalOcean (не поддерживает Windows на базовых тарифах)
-
-## Вариант 4: Доступ к реальному компьютеру с Windows
-
-Если у вас есть доступ к:
-- Рабочему компьютеру с Windows
-- Ноутбуку друга/коллеги с Windows
-- Компьютеру в интернет-кафе
-
-Скопируйте файлы проекта и выполните команды из раздела "Компиляция внутри виртуальной машины Windows".
-
-## Рекомендуемый вариант
-
-Для быстрого результата рекомендую **Вариант 1 (GitHub Actions)** - это бесплатно, 
-не требует установки Windows на Mac, и полностью автоматизировано.
-
-## Проверка .exe файла
-
-После получения .exe файла:
-
-1. Проверьте его антивирусом (Windows Defender автоматически)
-2. Запустите на тестовом компьютере с Windows
-3. Убедитесь, что все функции работают корректно
-
-## Если ничего не подходит
-
-Если ни один вариант не подходит, я могу помочь вам:
-- Найти сервис по компиляции Python в .exe
-- Настроить удаленную сборку
-- Предоставить более детальные инструкции для конкретного варианта
+1. Windows Defender / антивирус.
+2. Запуск на **реальном Win7 x64** (или чистой VM), не только на Win11.
+3. Проверить загрузку картинок, CMYK, экспорт PDF, сохранение заказа.

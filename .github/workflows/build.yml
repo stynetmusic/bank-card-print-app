@@ -1,43 +1,110 @@
-env:
-  BUILD_TARGET: "Windows7_x64"
-  APP_NAME: "UF_Print_Cards_App"
+name: Build Windows 7 x64 EXE
 
-name: Build Windows EXE (x64)
+# Single supported Windows artifact: Win7+ x64 (also runs on Win10/11).
+# Do not build the Windows exe on macOS — PyInstaller does not cross-compile.
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
   workflow_dispatch:
+
+env:
+  BUILD_TARGET: Windows7_x64
+  APP_NAME: UF_Print_Cards_App
 
 jobs:
   build:
+    # windows-2019 was retired by GitHub (2025-06-30). Build on 2022;
+    # Win7 target compatibility comes from Python 3.8 + PyQt5 + PyInstaller 4.10 pins.
     runs-on: windows-2022
     timeout-minutes: 60
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Set up Python 3.8.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.8.10'
-        architecture: 'x64'
-        cache: 'pip'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Build EXE
-      run: pyinstaller --noconfirm build.spec
-    
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: UF_Print_Cards_Windows7_x64
-        path: dist/UF_Print_Cards_App/
-        retention-days: 30
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.8.10 (x64)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8.10'
+          architecture: x64
+          cache: pip
+          allow-prereleases: false
+          check-latest: false
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade "pip<25" "setuptools<70" wheel
+          pip install -r requirements.txt
+          python -c "import sys; from PyQt5.QtCore import QT_VERSION_STR; import PyInstaller; print(sys.version); print('PyQt5', QT_VERSION_STR); print('PyInstaller', PyInstaller.__version__)"
+
+      - name: Build EXE (onedir)
+        run: pyinstaller --noconfirm build.spec
+
+      - name: Strip leftover host CRT from dist (belt and suspenders)
+        shell: pwsh
+        run: |
+          $root = "dist/UF_Print_Cards_App"
+          $removed = @()
+          Get-ChildItem -Path $root -Recurse -File | ForEach-Object {
+            $n = $_.Name.ToLowerInvariant()
+            if (
+              $n -eq 'ucrtbase.dll' -or $n.StartsWith('api-ms-win-') -or
+              $n -match '^msvcp140' -or $n -match '^vcruntime140' -or
+              $n -eq 'concrt140.dll' -or $n -eq 'vccorlib140.dll' -or
+              $n -eq 'libpq.dll'
+            ) {
+              $removed += $_.FullName
+              Remove-Item -Force $_.FullName
+            }
+          }
+          if ($removed.Count -gt 0) {
+            Write-Host "Removed $($removed.Count) forbidden CRT/API DLLs:"
+            $removed | ForEach-Object { Write-Host "  $_" }
+          } else {
+            Write-Host "No forbidden CRT/API DLLs found to remove."
+          }
+
+      - name: Win7 guard — ban GetSystemTimePreciseAsFileTime CRT DLLs
+        shell: pwsh
+        run: |
+          $root = "dist/UF_Print_Cards_App"
+          $pattern = "GetSystemTimePreciseAsFileTime"
+          $forbidden = Get-ChildItem -Path $root -Recurse -File |
+            Where-Object {
+              $n = $_.Name.ToLowerInvariant()
+              $n -eq 'ucrtbase.dll' -or $n.StartsWith('api-ms-win-') -or
+              $n -match '^msvcp140' -or $n -match '^vcruntime140' -or
+              $n -eq 'concrt140.dll' -or $n -eq 'vccorlib140.dll'
+            }
+          if ($forbidden) {
+            Write-Error ("Forbidden CRT/API-set DLLs still in bundle:`n" + ($forbidden.FullName -join "`n"))
+            exit 1
+          }
+          $exe = Join-Path $root "UF_Print_Cards_App.exe"
+          if (Test-Path $exe) {
+            $bytes = [System.IO.File]::ReadAllBytes($exe)
+            $text = [System.Text.Encoding]::ASCII.GetString($bytes)
+            if ($text.Contains($pattern)) {
+              Write-Error "GetSystemTimePreciseAsFileTime found in bootloader exe"
+              exit 1
+            }
+          }
+          Write-Host "Win7 CRT guard passed."
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UF_Print_Cards_Windows7_x64
+          path: dist/UF_Print_Cards_App/
+          retention-days: 30
