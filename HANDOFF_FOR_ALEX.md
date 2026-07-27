@@ -93,19 +93,12 @@ Also: `active_editors()`, `capture_state()`, shared `erase_at()`, hard-fail on f
 
 ## 4. Current CI status (as of handoff write-up)
 
-1. First PR run stuck forever on `windows-2019` → cancelled.  
-2. Switched to `windows-2022` → run started.  
-3. That run **failed** at a **post-install sanity check**, not during `pip install`:
+**Green.** Successful run: https://github.com/stynetmusic/bank-card-print-app/actions/runs/30266329379  
 
-```text
-AttributeError: module 'PyQt5' has no attribute 'QtCore'
-```
+- Artifact: **`UF_Print_Cards_Windows7_x64`** (~124 MB) — download from that run’s Artifacts section  
+- Earlier: `windows-2019` queue forever (cancelled); then a failed sanity check (`PyQt5.QtCore` attribute) — both fixed on this branch  
 
-Install of PyQt5 5.15.4 / PyInstaller 4.10 **succeeded**. The check used `PyQt5.QtCore` incorrectly; it must be `from PyQt5.QtCore import QT_VERSION_STR` (or `import PyQt5.QtCore`).  
-
-**Agent action:** fix that one line in `build.yml`, push, re-run Actions, download artifact.
-
-Failed run example: https://github.com/stynetmusic/bank-card-print-app/actions/runs/30266101124  
+**Next for humans:** download the folder, smoke-test on **Win7 x64**, then merge PR #1.  
 
 ---
 
