@@ -43,40 +43,56 @@ jobs:
       - name: Build EXE (onedir)
         run: pyinstaller --noconfirm build.spec
 
+      - name: Strip leftover host CRT from dist (belt and suspenders)
+        shell: pwsh
+        run: |
+          $root = "dist/UF_Print_Cards_App"
+          $removed = @()
+          Get-ChildItem -Path $root -Recurse -File | ForEach-Object {
+            $n = $_.Name.ToLowerInvariant()
+            if (
+              $n -eq 'ucrtbase.dll' -or $n.StartsWith('api-ms-win-') -or
+              $n -match '^msvcp140' -or $n -match '^vcruntime140' -or
+              $n -eq 'concrt140.dll' -or $n -eq 'vccorlib140.dll' -or
+              $n -eq 'libpq.dll'
+            ) {
+              $removed += $_.FullName
+              Remove-Item -Force $_.FullName
+            }
+          }
+          if ($removed.Count -gt 0) {
+            Write-Host "Removed $($removed.Count) forbidden CRT/API DLLs:"
+            $removed | ForEach-Object { Write-Host "  $_" }
+          } else {
+            Write-Host "No forbidden CRT/API DLLs found to remove."
+          }
+
       - name: Win7 guard — ban GetSystemTimePreciseAsFileTime CRT DLLs
         shell: pwsh
         run: |
           $root = "dist/UF_Print_Cards_App"
           $pattern = "GetSystemTimePreciseAsFileTime"
-          $suspects = Get-ChildItem -Path $root -Recurse -Include *.dll,*.exe -File |
-            Where-Object {
-              $_.Name -match '^(ucrtbase|msvcp140|vcruntime140|concrt140|api-ms-win)' -or
-              $_.Name -eq 'UF_Print_Cards_App.exe'
-            }
-          $bad = @()
-          foreach ($f in $suspects) {
-            $bytes = [System.IO.File]::ReadAllBytes($f.FullName)
-            $text = [System.Text.Encoding]::ASCII.GetString($bytes)
-            if ($text.Contains($pattern)) {
-              $bad += $f.FullName
-            }
-          }
-          # Also fail if forbidden CRT files are still present at all
           $forbidden = Get-ChildItem -Path $root -Recurse -File |
             Where-Object {
               $n = $_.Name.ToLowerInvariant()
               $n -eq 'ucrtbase.dll' -or $n.StartsWith('api-ms-win-') -or
-              $n -match '^msvcp140' -or $n -match '^vcruntime140' -or $n -eq 'concrt140.dll'
+              $n -match '^msvcp140' -or $n -match '^vcruntime140' -or
+              $n -eq 'concrt140.dll' -or $n -eq 'vccorlib140.dll'
             }
           if ($forbidden) {
             Write-Error ("Forbidden CRT/API-set DLLs still in bundle:`n" + ($forbidden.FullName -join "`n"))
             exit 1
           }
-          if ($bad) {
-            Write-Error ("GetSystemTimePreciseAsFileTime found in:`n" + ($bad -join "`n"))
-            exit 1
+          $exe = Join-Path $root "UF_Print_Cards_App.exe"
+          if (Test-Path $exe) {
+            $bytes = [System.IO.File]::ReadAllBytes($exe)
+            $text = [System.Text.Encoding]::ASCII.GetString($bytes)
+            if ($text.Contains($pattern)) {
+              Write-Error "GetSystemTimePreciseAsFileTime found in bootloader exe"
+              exit 1
+            }
           }
-          Write-Host "Win7 CRT guard passed (no host UCRT/MSVC CRT in bundle)."
+          Write-Host "Win7 CRT guard passed."
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

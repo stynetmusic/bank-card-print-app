@@ -8,10 +8,41 @@ starts. Target machines should install VC++ Redistributable x64 (+ UCRT update).
 """
 from PyInstaller.utils.hooks import collect_all
 import os
-import sys
 
 datas_qt, binaries_qt, hidden_qt = collect_all('PyQt5')
 datas_np, binaries_np, hidden_np = collect_all('numpy')
+
+WIN7_FORBIDDEN_EXACT = {
+    'ucrtbase.dll',
+    'ucrtbased.dll',
+    'msvcp140.dll',
+    'msvcp140_1.dll',
+    'msvcp140_2.dll',
+    'vcruntime140.dll',
+    'vcruntime140_1.dll',
+    'concrt140.dll',
+    'vccorlib140.dll',
+    'libpq.dll',
+}
+
+
+def _is_forbidden_dll(path_or_name):
+    base = os.path.basename(path_or_name).lower()
+    if base in WIN7_FORBIDDEN_EXACT:
+        return True
+    if base.startswith('api-ms-win-'):
+        return True
+    return False
+
+
+def _keep_toc_entry(toc_entry):
+    """Drop CRT/API-set entries from binaries or datas TOC."""
+    # TOC: (dest_name, src_path, typecode) after Analysis; Analysis input uses (src, dest_dir)
+    for part in toc_entry[:2]:
+        if isinstance(part, str) and _is_forbidden_dll(part):
+            return False
+    return True
+
 
 try:
     import PyQt5
@@ -19,9 +50,10 @@ try:
     qt_bin_dir = os.path.join(pyqt_root, 'Qt', 'bin')
     if os.path.isdir(qt_bin_dir):
         for entry in os.listdir(qt_bin_dir):
+            if _is_forbidden_dll(entry):
+                continue
             full_path = os.path.join(qt_bin_dir, entry)
             if os.path.isfile(full_path) and full_path.lower().endswith('.dll'):
-                # Keep Qt DLLs under the Qt tree only (avoid duplicating CRT into ".")
                 binaries_qt.append((full_path, 'PyQt5/Qt/bin'))
     qt_plugins_dir = os.path.join(pyqt_root, 'Qt', 'plugins')
     if os.path.isdir(qt_plugins_dir):
@@ -39,45 +71,24 @@ try:
     numpy_libs_dir = os.path.join(numpy_root, 'libs')
     if os.path.isdir(numpy_libs_dir):
         for entry in os.listdir(numpy_libs_dir):
+            if _is_forbidden_dll(entry):
+                continue
             full_path = os.path.join(numpy_libs_dir, entry)
             if os.path.isfile(full_path):
                 binaries_np.append((full_path, 'numpy/libs'))
 except Exception:
     pass
 
-# Do NOT pull MSVC/UCRT from the build host System32 (Win2022 copies break Win7).
-vc_runtime_dlls = []
-
-WIN7_FORBIDDEN_EXACT = {
-    'ucrtbase.dll',
-    'ucrtbased.dll',
-    'msvcp140.dll',
-    'msvcp140_1.dll',
-    'msvcp140_2.dll',
-    'vcruntime140.dll',
-    'vcruntime140_1.dll',
-    'concrt140.dll',
-    'vccorlib140.dll',
-    # collect_all noise unrelated to this app
-    'libpq.dll',
-}
-
-
-def _keep_binary(toc_entry):
-    """Filter TOC binary entries that break Windows 7 when taken from Win2022."""
-    dest_name = toc_entry[0]
-    base = os.path.basename(dest_name).lower()
-    if base in WIN7_FORBIDDEN_EXACT:
-        return False
-    if base.startswith('api-ms-win-'):
-        return False
-    return True
-
+# Filter collect_all results up front (CRT often lands in datas).
+binaries_qt = [b for b in binaries_qt if _keep_toc_entry(b)]
+binaries_np = [b for b in binaries_np if _keep_toc_entry(b)]
+datas_qt = [d for d in datas_qt if _keep_toc_entry(d)]
+datas_np = [d for d in datas_np if _keep_toc_entry(d)]
 
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=binaries_qt + binaries_np + vc_runtime_dlls,
+    binaries=binaries_qt + binaries_np,
     datas=[('Arial.ttf', '.')] + datas_qt + datas_np,
     hiddenimports=hidden_qt + hidden_np + [
         'PIL',
@@ -100,7 +111,8 @@ a = Analysis(
     noarchive=False,
 )
 
-a.binaries = [b for b in a.binaries if _keep_binary(b)]
+a.binaries = [b for b in a.binaries if _keep_toc_entry(b)]
+a.datas = [d for d in a.datas if _keep_toc_entry(d)]
 
 pyz = PYZ(a.pure)
 
