@@ -12,7 +12,7 @@
 
 | Компонент | Версия | Зачем |
 |-----------|--------|--------|
-| GitHub runner | `windows-2019` | Старый ABI, ближе к Win7 |
+| GitHub runner | `windows-2022` | `windows-2019` снят GitHub (2025); Win7 даёт стек Python/Qt, не ОС раннера |
 | Python | **3.8.10 x64** | Практичный потолок для Win7 |
 | GUI | **PyQt5==5.15.4** | PyQt6 / новый Qt часто ломается на Win7 |
 | Bundler | **pyinstaller==4.10** | Без `GetSystemTimePreciseAsFileTime` (Win8+) |
