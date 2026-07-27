@@ -14,56 +14,45 @@
 
 ## Системные требования
 
-- Windows 10/11 (x64)
+- **Минимум:** Windows 7 SP1 **x64**
+- Также: Windows 10/11 (x64)
 - 4 GB RAM минимум
-- 100 MB свободного места на диске
+- ~200 MB свободного места (папка приложения + `_internal`)
+- Рекомендуется [Visual C++ Redistributable x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist)
+
+## Структура исходников
+
+- `main.py` — точка входа
+- `ufprint/` — приложение (редактор, заказы, PDF, конфиг)
+- `build.spec` — PyInstaller onedir (Win7-стек из `requirements.txt`)
+- `tests/` — юнит-тесты без GUI (`pip install -r requirements-dev.txt && pytest`)
 
 ## Установка на Windows
 
-### Вариант 1: Использование готового .exe файла (рекомендуется)
+### Вариант 1: Готовая сборка из GitHub Actions (рекомендуется)
 
-1. Скачайте файл `UF_Print_Cards.exe`
-2. Запустите файл (возможно потребуется подтверждение SmartScreen)
-3. Приложение готово к работе
+1. Скачайте артефакт **`UF_Print_Cards_Windows7_x64`** из Actions (workflow *Build Windows 7 x64 EXE*)
+2. Распакуйте **всю** папку `UF_Print_Cards_App` (рядом с `.exe` должна быть `_internal`)
+3. Запустите `UF_Print_Cards_App.exe` (возможно подтверждение SmartScreen)
+4. Не собирайте Windows `.exe` на Mac — только через Actions или на Windows x64 (см. `WINDOWS_BUILD_GUIDE.md`)
 
-### Вариант 2: Компиляция из исходного кода
+### Вариант 2: Компиляция из исходного кода (только Windows x64)
 
-#### Шаг 1: Установка Python
+Стек для совместимости с Win7 (не менять на PyQt6 / Python 3.11+):
 
-1. Скачайте Python с https://www.python.org/downloads/
-2. Выберите версию Python 3.11 или 3.12
-3. При установке **обязательно** поставьте галочку "Add Python to PATH"
-4. После установки перезагрузите командную строку
+| Компонент | Версия |
+|-----------|--------|
+| Python | 3.8.10 x64 |
+| GUI | PyQt5==5.15.4 |
+| Bundler | pyinstaller==4.10 |
 
-#### Шаг 2: Установка зависимостей
-
-Откройте командную строку (cmd) или PowerShell и выполните:
-
-```bash
-pip install PyQt6 Pillow reportlab pyinstaller
+```bat
+py -3.8 -m pip install --upgrade "pip<25" "setuptools<70" wheel
+py -3.8 -m pip install -r requirements.txt
+py -3.8 -m PyInstaller --noconfirm build.spec
 ```
 
-#### Шаг 3: Компиляция в .exe
-
-1. Скопируйте все файлы проекта в одну папку
-2. Откройте командную строку в этой папке
-3. Выполните команду:
-
-```bash
-pyinstaller --onefile --windowed --name UF_Print_Cards main.py
-```
-
-Или используйте файл спецификации:
-
-```bash
-pyinstaller build.spec
-```
-
-4. Готовый .exe файл будет в папке `dist`
-
-#### Шаг 4: Запуск
-
-Запустите `UF_Print_Cards.exe` из папки `dist`
+Готовое приложение: `dist\UF_Print_Cards_App\` (onedir). Запускайте exe **из этой папки**.
 
 ## Использование
 
@@ -114,7 +103,9 @@ pyinstaller build.spec
 
 ### Ошибка при запуске .exe
 
-- Убедитесь, что у вас установлены последние обновления Windows
+- Убедитесь, что скопирована вся папка `UF_Print_Cards_App` вместе с `_internal`
+- Установите Visual C++ Redistributable x64
+- На Win7: сборка должна быть с Python 3.8 + PyInstaller 4.10 + PyQt5 (см. `WINDOWS_BUILD_GUIDE.md`)
 - Отключите антивирус временно и попробуйте снова
 - Запустите от имени администратора
 
