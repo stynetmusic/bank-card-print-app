@@ -40,7 +40,7 @@ def fit_image_to_box(img_w, img_h, max_w, max_h):
 
 
 def _img_max(frame_w):
-    return frame_w * 0.95
+    return frame_w * 0.90
 
 
 def _img_row_dimensions(image_obj, max_cell_w, cell_aspect):
