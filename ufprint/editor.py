@@ -55,7 +55,7 @@ class ImageEditor(QWidget):
         self.dragging = False
         self.last_mouse_pos = QPoint()
         self.setMouseTracking(True)
-        self.setMinimumSize(348, 224)  # 87x56mm at 100 DPI
+        self.setFixedSize(348, 224)  # 87x56mm at 100 DPI
         self.setStyleSheet("background-color: #252538; border: 2px solid #89b4fa;")
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.position_callback = None  # Callback for sync mode
