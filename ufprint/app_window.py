@@ -863,14 +863,14 @@ class CardPrintingApp(QMainWindow):
             "PDF файлы (*.pdf)",
         )
 
-         if file_path:
-             try:
-                 export_print_pdf(file_path, image_a, image_b)
-                 QMessageBox.information(self, "Успех", f"PDF сохранен: {file_path}")
-             except Exception as e:
-                 error_msg = f"Не удалось создать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
-                 logging.error(error_msg)
-                 QMessageBox.critical(self, "Ошибка экспорта PDF", error_msg)
+        if file_path:
+            try:
+                export_print_pdf(file_path, image_a, image_b)
+                QMessageBox.information(self, "Успех", f"PDF сохранен: {file_path}")
+            except Exception as e:
+                error_msg = f"Не удалось создать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+                logging.error(error_msg)
+                QMessageBox.critical(self, "Ошибка экспорта PDF", error_msg)
 
     def export_pdf_side_a(self):
         image = self.side_a_editor.get_framed_image()
