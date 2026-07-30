@@ -39,8 +39,13 @@ def fit_image_to_box(img_w, img_h, max_w, max_h):
     return final_width, final_height
 
 
+PAGE_W = 87 * mm
+PAGE_H = 56 * mm
+_CARD_ASPECT = PAGE_H / PAGE_W
+
+
 def _img_max(frame_w):
-    return frame_w * 0.90
+    return frame_w * 0.95
 
 
 def _img_row_dimensions(image_obj, max_cell_w, cell_aspect):
@@ -49,10 +54,6 @@ def _img_row_dimensions(image_obj, max_cell_w, cell_aspect):
         return max_cell_w, max_cell_w * cell_aspect
     max_h = max_cell_w * cell_aspect
     return fit_image_to_box(iw, ih, max_cell_w, max_h)
-
-
-PAGE_W = 87 * mm
-PAGE_H = 56 * mm
 
 
 def _find_arial_font():
@@ -106,13 +107,13 @@ def export_print_pdf(file_path, image_a, image_b):
 
     story = []
     if image_a is not None:
-        sw, sh = _img_row_dimensions(image_a, _img_max(PAGE_W), _img_max(PAGE_H) / _img_max(PAGE_W))
+        sw, sh = _img_row_dimensions(image_a, _img_max(PAGE_W), _CARD_ASPECT)
         story.append(_pil_to_rl_image(image_a, sw, sh))
 
     if image_b is not None:
         if story:
             story.append(PageBreak())
-        sw, sh = _img_row_dimensions(image_b, _img_max(PAGE_W), _img_max(PAGE_H) / _img_max(PAGE_W))
+        sw, sh = _img_row_dimensions(image_b, _img_max(PAGE_W), _CARD_ASPECT)
         story.append(_pil_to_rl_image(image_b, sw, sh))
 
     if not story:
@@ -140,7 +141,7 @@ def export_print_pdf_single(file_path, image):
     if image is None:
         raise ValueError("No image to export")
 
-    sw, sh = _img_row_dimensions(image, _img_max(PAGE_W), _img_max(PAGE_H) / _img_max(PAGE_W))
+    sw, sh = _img_row_dimensions(image, _img_max(PAGE_W), _CARD_ASPECT)
     story = [_pil_to_rl_image(image, sw, sh)]
     doc.build(story)
     return file_path
@@ -275,7 +276,7 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
     for label, image_obj in (("Сторона А", image_a), ("Сторона Б", image_b)):
         if image_obj is not None:
             try:
-                sw, sh = _img_row_dimensions(image_obj, max_cell_w, 0.625)
+                sw, sh = _img_row_dimensions(image_obj, max_cell_w, _CARD_ASPECT)
                 rows.append(_pil_to_rl_image(image_obj, sw, sh))
             except Exception:
                 rows.append(Paragraph(f"[Ошибка загрузки {label}]", normal_style))
