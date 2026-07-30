@@ -40,7 +40,7 @@ def fit_image_to_box(img_w, img_h, max_w, max_h):
 
 
 def _img_max(frame_w):
-    return frame_w * 0.97
+    return frame_w * 0.95
 
 
 def _img_row_dimensions(image_obj, max_cell_w, cell_aspect):
@@ -270,7 +270,7 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
     story.append(Paragraph("<b>Макет карты (Сторона А и Сторона Б):</b>", normal_style))
     story.append(Spacer(1, 10))
 
-    max_cell_w = _img_max(img_col_w)
+    max_cell_w = _img_max(frame_w / 2)
     rows = []
     for label, image_obj in (("Сторона А", image_a), ("Сторона Б", image_b)):
         if image_obj is not None:
