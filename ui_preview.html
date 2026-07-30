@@ -3,437 +3,360 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UF Print — Fluent Design Previews</title>
+<title>UF Print — Desktop Preview</title>
 <style>
-  /* ===== WinUI 3 / Fluent Design Variables ===== */
-  :root {
-    --sg: 8px;
-    --sg-xs: 4px;
-    --sg-sm: 6px;
-    --sg-md: 12px;
-    --sg-lg: 16px;
-    --sg-xl: 20px;
-    --sg-xxl: 32px;
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 20px;
-    --radius-full: 9999px;
-    --font: 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
-    --accent: #0078D4;
-    --accent-hover: #106EBE;
-    --accent-light: #DEECF9;
-    --bg-window: #F3F3F3;
-    --bg-surface: #FFFFFF;
-    --bg-subtle: #F8F8F8;
-    --bg-card: #FFFFFF;
-    --text-primary: #201F1E;
-    --text-secondary: #605E5C;
-    --text-tertiary: #918F8D;
-    --border: #C8C6C4;
-    --border-subtle: #E1DFDD;
-    --shadow-4: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.04);
-    --shadow-8: 0 4px 8px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04);
-    --shadow-16: 0 8px 24px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.04);
-    --mica: rgba(243,243,243,0.7);
-  }
-
-  [data-theme="dark"] {
-    --bg-window: #1B1B1B;
-    --bg-surface: #252526;
-    --bg-subtle: #2D2D2D;
-    --bg-card: #252526;
-    --text-primary: #F3F3F3;
-    --text-secondary: #C8C6C4;
-    --text-tertiary: #908F8D;
-    --border: #595959;
-    --border-subtle: #3B3B3B;
-    --shadow-4: 0 1px 3px rgba(0,0,0,0.2);
-    --shadow-8: 0 4px 8px rgba(0,0,0,0.2);
-    --shadow-16: 0 8px 24px rgba(0,0,0,0.3);
-    --mica: rgba(37,37,38,0.7);
-  }
-
+  /* ===== Reset & Base ===== */
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: var(--font); background: #000; padding: 0; color: var(--text-primary); -webkit-font-smoothing: antialiased; }
-
-  /* ===== Layout ===== */
-  .page { max-width: 1200px; margin: 0 auto; padding: var(--sg-xxl) var(--sg-xl) 40px; }
-  .page-title { font-size: 22px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.3px; margin-bottom: var(--sg-xs); }
-  .page-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: var(--sg-xxl); }
-  .variants { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--sg-xl); }
-  .variant { display: flex; flex-direction: column; align-items: center; gap: var(--sg); }
-  .variant-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-align: center; letter-spacing: 0.5px; text-transform: uppercase; }
+  body { font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif; background: #1a1a1a; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; color: #201F1E; }
 
   /* ===== Window Shell ===== */
-  .win { width: 100%; max-width: 760px; background: var(--bg-window); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-16); transition: background 0.3s, box-shadow 0.3s; }
-  .win-titlebar { height: 32px; display: flex; align-items: center; padding: 0 12px; gap: 8px; user-select: none; -webkit-user-select: none; }
-  .win-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-  .win-dot-r { background: #FF5F57; border: 1px solid #E0443E; }
-  .win-dot-y { background: #FEBC2E; border: 1px solid #E0A020; }
-  .win-dot-g { background: #28C840; border: 1px solid #1FA830; }
-  .win-caption { flex: 1; text-align: center; font-size: 11px; color: var(--text-tertiary); pointer-events: none; }
-  .win-body { padding: var(--sg-lg); display: flex; flex-direction: column; gap: var(--sg); min-height: 320px; }
+  .win { width: 870px; background: #F3F3F3; border-radius: 8px; overflow: hidden; box-shadow: 0 12px 48px rgba(0,0,0,0.35); display: flex; flex-direction: column; }
+  .win.dark { background: #2B2B2B; color: #F3F3F3; }
+  .win.dark .toolbar { background: #333; border-bottom-color: #444; }
+  .win.dark .toolbar .brand { color: #0078D4; }
+  .win.dark .tb-btn { color: #CCC; }
+  .win.dark .tb-btn:hover { background: #444; color: #FFF; }
+  .win.dark .tb-btn:active { background: #0078D4; }
+  .win.dark .field { background: #3C3C3C; border-color: #555; color: #F3F3F3; }
+  .win.dark .field:focus { border-color: #0078D4; }
+  .win.dark .combo { background: #3C3C3C; border-color: #555; color: #F3F3F3; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23CCC'/%3E%3C/svg%3E"); }
+  .win.dark .spin-btn { color: #CCC; background: #3C3C3C; }
+  .win.dark .spin-val { color: #F3F3F3; }
+  .win.dark .panel { background: #252526; border-color: #3F3F46; }
+  .win.dark .panel-title { color: #9A9A9A; }
+  .win.dark .chip { background: #3C3C3C; border-color: #555; color: #CCC; }
+  .win.dark .chip:hover { background: #444; }
+  .win.dark .chk { color: #F3F3F3; }
+  .win.dark .chk-box { border-color: #777; background: #3C3C3C; }
+  .win.dark .chk-box.checked { background: #0078D4; border-color: #0078D4; }
+  .win.dark .log-panel { background: #1E1E1E; border-color: #333; }
+  .win.dark .log-line { color: #6EE76E; }
+  .win.dark .log-ts { color: #6B6B6B; }
+  .win.dark .log-warn { color: #FFD700; }
+  .win.dark .log-ok { color: #4EC9B0; }
+  .win.dark .statusbar { background: #252526; border-top-color: #3F3F46; color: #888; }
 
-  /* ===== Mica effect on titlebar ===== */
-  .win.mica .win-titlebar { background: var(--mica); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 0.5px solid var(--border-subtle); }
-  .win.acrylic .win-titlebar { background: rgba(243,243,243,0.65); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%); border-bottom: 0.5px solid rgba(0,0,0,0.08); }
-  [data-theme="dark"] .win.acrylic .win-titlebar { background: rgba(37,37,38,0.65); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%); border-bottom: 0.5px solid rgba(255,255,255,0.08); }
-
-  /* ===== Statusbar ===== */
-  .win-statusbar { height: 22px; background: var(--bg-subtle); border-top: 1px solid var(--border-subtle); display: flex; align-items: center; padding: 0 12px; font-size: 9px; color: var(--text-tertiary); justify-content: space-between; }
+  /* ===== Menu Bar ===== */
+  .menubar { display: flex; background: #F0F0F0; border-bottom: 1px solid #D0D0D0; padding: 0 4px; min-height: 24px; }
+  .win.dark .menubar { background: #2B2B2B; border-bottom-color: #3F3F46; }
+  .menu-item { padding: 2px 10px; font-size: 11px; color: #201F1E; cursor: pointer; border-radius: 2px; white-space: nowrap; }
+  .menu-item:hover { background: #0078D4; color: #FFF; }
+  .menu-sep { width: 1px; background: #D0D0D0; margin: 3px 4px; }
+  .win.dark .menu-sep { background: #3F3F46; }
 
   /* ===== Toolbar ===== */
-  .toolbar { display: flex; align-items: center; gap: var(--sg-sm); padding: var(--sg-sm) 0; flex-wrap: wrap; }
-  .toolbar-brand { font-size: 13px; font-weight: 600; color: var(--accent); margin-right: var(--sg-lg); letter-spacing: -0.2px; }
-  .chip { padding: 4px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-full); background: var(--bg-surface); color: var(--text-secondary); font-size: 11px; font-family: var(--font); cursor: pointer; transition: all 0.15s; }
-  .chip:hover { background: var(--bg-subtle); }
-  .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .chip-icon { margin-right: 4px; }
+  .toolbar { display: flex; align-items: center; padding: 4px 8px; background: #FFF; border-bottom: 1px solid #E0E0E0; gap: 4px; min-height: 36px; }
+  .tb-btn { padding: 4px 10px; background: transparent; border: 1px solid transparent; border-radius: 3px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; color: #333; font-family: inherit; }
+  .tb-btn:hover { background: #E8E8E8; border-color: #D0D0D0; }
+  .tb-btn:active { background: #D0D0D0; }
+  .tb-btn.primary { background: #0078D4; color: #FFF; border-color: #0078D4; font-weight: 600; }
+  .tb-btn.primary:hover { background: #106EBE; }
+  .tb-sep { width: 1px; height: 18px; background: #D0D0D0; margin: 0 4px; }
+  .toolbar-spacer { flex: 1; }
+  .brand { font-size: 12px; font-weight: 700; color: #0078D4; margin-right: 12px; letter-spacing: -0.2px; }
 
-  /* ===== Content Layout ===== */
-  .content { display: flex; gap: var(--sg-lg); flex: 1; }
-  .sidebar { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: var(--sg); }
-  .main { flex: 1; display: flex; flex-direction: column; gap: var(--sg); }
-  .main-wide { display: flex; gap: var(--sg-lg); flex: 1; align-items: stretch; }
-  .main-narrow { flex: 1; display: flex; flex-direction: column; gap: var(--sg); }
+  /* ===== Main Content Area ===== */
+  .main { display: flex; flex: 1; min-height: 0; }
+  .main-left { width: 220px; flex-shrink: 0; border-right: 1px solid #E0E0E0; padding: 10px; display: flex; flex-direction: column; gap: 10px; background: #FAFAFA; }
+  .win.dark .main-left { background: #1E1E1E; border-right-color: #3F3F46; }
+  .main-center { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
+  .main-right { width: 200px; flex-shrink: 0; border-left: 1px solid #E0E0E0; padding: 10px; display: flex; flex-direction: column; gap: 10px; background: #FAFAFA; }
+  .win.dark .main-right { background: #1E1E1E; border-left-color: #3F3F46; }
 
-  /* ===== Card / Panel ===== */
-  .panel { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--sg); box-shadow: var(--shadow-4); }
-  .panel-title { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: var(--sg-sm); }
+  /* ===== Form Elements ===== */
+  .field { background: #FFF; border: 1px solid #C8C6C4; border-radius: 3px; padding: 5px 8px; font-size: 11px; font-family: inherit; color: #201F1E; outline: none; width: 100%; }
+  .field:focus { border-color: #0078D4; box-shadow: 0 0 0 1px rgba(0,120,212,0.2); }
+  .field-label { font-size: 10px; color: #605E5C; margin-bottom: 3px; display: block; font-weight: 500; }
+  .combo { background: #FFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23605E5C'/%3E%3C/svg%3E") no-repeat right 6px center; border: 1px solid #C8C6C4; border-radius: 3px; padding: 5px 24px 5px 8px; font-size: 11px; font-family: inherit; color: #201F1E; appearance: none; -webkit-appearance: none; outline: none; cursor: pointer; width: 100%; }
+  .combo:focus { border-color: #0078D4; box-shadow: 0 0 0 1px rgba(0,120,212,0.2); }
+  .spin-wrap { display: flex; align-items: center; border: 1px solid #C8C6C4; border-radius: 3px; overflow: hidden; background: #FFF; width: 80px; }
+  .spin-btn { width: 22px; height: 20px; background: transparent; border: none; cursor: pointer; font-size: 11px; color: #605E5C; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .spin-btn:hover { background: #E8E8E8; }
+  .spin-val { flex: 1; text-align: center; font-size: 11px; font-family: inherit; border: none; outline: none; background: transparent; color: #201F1E; padding: 3px 0; font-weight: 500; }
 
-  /* ===== Form Controls (WinUI native look) ===== */
-  .field { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 10px; font-size: 12px; font-family: var(--font); color: var(--text-primary); outline: none; transition: border-color 0.1s; width: 100%; }
-  .field:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-  .field-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 3px; display: block; }
-  .field-row { display: flex; gap: var(--sg-sm); align-items: center; margin-bottom: var(--sg-sm); }
+  /* ===== Panels ===== */
+  .panel { background: #FFF; border: 1px solid #E1DFDD; border-radius: 4px; padding: 10px; }
+  .panel-title { font-size: 10px; color: #605E5C; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 8px; }
+  .field-group { margin-bottom: 8px; }
+  .field-group:last-child { margin-bottom: 0; }
+  .field-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
   .field-row .field { flex: 1; }
+  .field-row .field-label { min-width: 50px; margin-bottom: 0; flex-shrink: 0; }
 
-  /* ===== ComboBox ===== */
-  .combo { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 28px 6px 10px; font-size: 12px; font-family: var(--font); color: var(--text-primary); outline: none; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23605E5C'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; cursor: pointer; min-width: 90px; }
-  .combo:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-
-  /* ===== SpinBox (WinUI style) ===== */
-  .spin-wrap { display: flex; align-items: center; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-surface); width: 90px; }
-  .spin-btn { width: 28px; height: 26px; background: transparent; border: none; font-size: 12px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .spin-btn:hover { background: var(--bg-subtle); }
-  .spin-val { flex: 1; text-align: center; font-size: 12px; font-family: var(--font); border: none; outline: none; background: transparent; color: var(--text-primary); font-weight: 500; padding: 4px 0; }
-
-  /* ===== Buttons ===== */
-  .btn { padding: 7px 16px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; font-family: var(--font); cursor: pointer; border: 1px solid transparent; transition: all 0.1s; letter-spacing: -0.1px; white-space: nowrap; }
-  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 2px 6px rgba(0,120,212,0.3); }
-  .btn-secondary { background: var(--bg-surface); color: var(--text-primary); border-color: var(--border); }
-  .btn-secondary:hover { background: var(--bg-subtle); box-shadow: var(--shadow-4); }
-  .btn-accent { background: #107C10; color: #fff; border-color: #107C10; }
-  .btn-accent:hover { background: #0E6A0E; }
-  .btn-danger { background: #F75335; color: #fff; border-color: #F75335; }
-  .btn-block { width: 100%; justify-content: center; display: flex; }
-  .btn-row { display: flex; gap: var(--sg-sm); flex-wrap: wrap; }
-
-  /* ===== Checkbox ===== */
-  .chk { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-primary); cursor: pointer; padding: 4px 0; }
-  .chk-box { width: 14px; height: 14px; border: 1.5px solid var(--border); border-radius: 2px; background: var(--bg-surface); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.1s; }
-  .chk-box.checked { background: var(--accent); border-color: var(--accent); }
-  .chk-box.checked::after { content: '✓'; color: #fff; font-size: 10px; line-height: 1; }
-
-  /* ===== Tab Bar ===== */
-  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-subtle); padding: 0 var(--sg); }
-  .tab { padding: 8px 14px; font-size: 12px; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; transition: all 0.1s; }
-  .tab:hover { color: var(--text-primary); background: var(--bg-subtle); }
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  /* ===== Chips / Tabs ===== */
+  .chip { padding: 3px 10px; font-size: 10px; background: #F3F3F3; border: 1px solid #D0CFCF; border-radius: 10px; color: #333; cursor: pointer; white-space: nowrap; font-family: inherit; }
+  .chip:hover { background: #E8E8E8; }
+  .chip.active { background: #0078D4; color: #FFF; border-color: #0078D4; }
 
   /* ===== Card Preview ===== */
-  .card-preview { background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--sg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sg-sm); }
-  .card-sim { width: 65%; height: 42px; background: linear-gradient(135deg, #E8F0FE, #D0E0FA); border-radius: var(--radius-sm); border: 1px solid #B8D0F8; display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--text-tertiary); }
+  .card-preview { background: #F8F8F8; border: 1px solid #E0E0E0; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+  .card-sim { width: 60%; height: 40px; background: linear-gradient(135deg, #E8F0FE, #D0E0FA); border-radius: 3px; border: 1px solid #B0C8E8; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #666; }
+  .card-meta { font-size: 9px; color: #888; }
 
-  /* ===== Status indicators ===== */
-  .status-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-  .led { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .led-on { background: #107C10; box-shadow: 0 0 6px rgba(16,124,16,0.4); }
-  .led-warn { background: #FFB900; box-shadow: 0 0 6px rgba(255,185,0,0.4); }
+  /* ===== Checkbox ===== */
+  .chk { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #201F1E; cursor: pointer; padding: 2px 0; }
+  .chk-box { width: 14px; height: 14px; border: 1.5px solid #C8C6C4; border-radius: 2px; background: #FFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; color: #FFF; }
+  .chk-box.checked { background: #0078D4; border-color: #0078D4; }
 
-  /* ===== Sidebar Icon Buttons ===== */
-  .side-btn { display: flex; align-items: center; gap: 10px; padding: var(--sg-sm) 12px; border-radius: var(--radius-sm); font-size: 12px; color: var(--text-secondary); cursor: pointer; border: none; background: transparent; width: 100%; text-align: left; transition: all 0.1s; font-family: var(--font); }
-  .side-btn:hover { background: var(--bg-subtle); color: var(--text-primary); }
-  .side-btn.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
-  .side-btn .ico { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+  /* ===== Statusbar ===== */
+  .statusbar { height: 24px; background: #F5F5F5; border-top: 1px solid #E0E0E0; display: flex; align-items: center; padding: 0 10px; font-size: 9px; color: #888; justify-content: space-between; flex-shrink: 0; }
+  .statusbar .sep { margin: 0 8px; color: #D0D0D0; }
 
   /* ===== Log Console ===== */
-  .log-console { background: #1E1E1E; border-radius: var(--radius-sm); padding: 8px 10px; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 10px; color: #6EE76E; line-height: 1.5; flex: 1; max-height: 100px; overflow: auto; }
-  .log-console .ts { color: #6B6B6B; }
+  .log-panel { background: #1E1E1E; border-radius: 3px; padding: 8px 10px; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 10px; line-height: 1.5; max-height: 120px; overflow-y: auto; flex-shrink: 0; }
+  .log-line { display: flex; gap: 6px; }
+  .log-ts { color: #6B6B6B; min-width: 50px; }
+  .log-msg { color: #6EE76E; }
+  .log-warn { color: #FFD700; }
+  .log-err { color: #F75335; }
+  .log-ok { color: #4EC9B0; }
 
-  /* ===== Metric Cards ===== */
-  .metrics { display: flex; gap: var(--sg); }
-  .metric { flex: 1; background: var(--bg-subtle); border-radius: var(--radius-sm); padding: var(--sg); text-align: center; }
-  .metric .val { font-size: 18px; font-weight: 600; color: var(--text-primary); }
-  .metric .lbl { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+  /* ===== Toolbar Row ===== */
+  .tool-row { display: flex; gap: 4px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .tool-row .lbl { font-size: 10px; color: #605E5C; min-width: 50px; font-weight: 500; }
 
-  /* ===== Radio toggle ===== */
-  .toggle-row { display: flex; gap: 6px; }
-  .toggle-opt { flex: 1; text-align: center; padding: 6px 0; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 11px; cursor: pointer; background: var(--bg-surface); color: var(--text-secondary); transition: all 0.1s; }
-  .toggle-opt.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 600; }
+  /* ===== Preview + Settings split ===== */
+  .preview-col { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .settings-col { width: 260px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
 
-  /* ---- Dark variant overrides ---- */
-  .win.dark { --bg-window: #252526; --bg-surface: #2D2D2D; --bg-subtle: #333333; --bg-card: #2D2D2D; --text-primary: #F3F3F3; --text-secondary: #C8C6C4; --text-tertiary: #908F8D; --border: #595959; --border-subtle: #3B3B3B; --mica: rgba(45,45,46,0.7); --accent: #0078D4; }
+  /* ===== Progress Bar ===== */
+  .progress-track { height: 4px; background: #E0E0E0; border-radius: 2px; overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; background: #0078D4; border-radius: 2px; width: 65%; }
 
-  /* ---- Compact variant ---- */
-  .win.compact { max-width: 400px; }
-
-  /* ---- Splitter hint ---- */
-  .splitter-hint { height: 2px; background: var(--border-subtle); border-radius: 1px; margin: var(--sg-xs) 0; }
+  /* ===== Table-like data grid (for settings rows) ===== */
+  .data-row { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid #F0F0F0; font-size: 11px; gap: 8px; }
+  .data-row:last-child { border-bottom: none; }
+  .data-key { color: #605E5C; min-width: 70px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .data-val { flex: 1; color: #201F1E; font-weight: 500; }
+  .data-val input, .data-val select { max-width: 110px; }
 </style>
 </head>
 <body>
 
-<div class="page">
+<div class="win">
 
-  <div class="page-title">UF Print — Fluent Design Concepts</div>
-  <div class="page-subtitle">Windows 11 WinUI / Mica / Fluent Design system — 3 variants based on real app elements</div>
+  <!-- ===== Menu Bar ===== -->
+  <div class="menubar">
+    <span class="menu-item">Файл</span>
+    <span class="menu-item">Редактировать</span>
+    <span class="menu-item">Печать</span>
+    <span class="menu-item">Вид</span>
+    <span class="menu-item">? </span>
+    <span class="menu-sep"></span>
+    <span style="flex:1"></span>
+    <span class="menu-item" style="color:#888">UF Print v1.0</span>
+  </div>
 
-  <div class="variants">
+  <!-- ===== Toolbar ===== -->
+  <div class="toolbar">
+    <span class="brand">UF Print</span>
+    <button class="tb-btn">📄 Сторона А</button>
+    <button class="tb-btn">📄 Сторона Б</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn">🔄 Сброс</button>
+    <button class="tb-btn">🌈 Цвет</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn">💾 Сохранить заказ</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn primary">📄 Экспорт в PDF</button>
+    <div class="toolbar-spacer"></div>
+    <span style="font-size:10px;color:#888">🖨 HP LaserJet Pro M404dn</span>
+  </div>
 
-    <!-- ============ VARIANT 1: Light Mica ============ -->
-    <div class="variant">
-      <div class="variant-label">Light · Mica</div>
-      <div class="win mica">
-        <div class="win-titlebar">
-          <div class="win-dot win-dot-r"></div>
-          <div class="win-dot win-dot-y"></div>
-          <div class="win-dot win-dot-g"></div>
-          <div class="win-caption">UF Print — Банковские карты</div>
+  <!-- ===== Main Content ===== -->
+  <div class="main">
+
+    <!-- Left Panel -->
+    <div class="main-left">
+      <div class="panel">
+        <div class="panel-title">Загрузка изображений</div>
+        <div class="data-row">
+          <span class="data-key">Сторона А</span>
+          <span class="data-val" style="font-size:10px;color:#107C10">✓ business_card_A.png</span>
         </div>
-        <div class="toolbar">
-          <span class="toolbar-brand">UF Print</span>
-          <span class="chip active"><span class="chip-icon">✏️</span>Редактор</span>
-          <span class="chip"><span class="chip-icon">📋</span>Заказы</span>
-          <span class="chip"><span class="chip-icon">⚙️</span>Настройки</span>
+        <div class="data-row">
+          <span class="data-key">Сторона Б</span>
+          <span class="data-val" style="font-size:10px;color:#FFB900">● waiting…</span>
         </div>
-        <div class="content">
-          <div class="sidebar">
-            <button class="side-btn active"><span class="ico">📄</span>Загрузить Сторону А</button>
-            <button class="side-btn"><span class="ico">📄</span>Загрузить Сторону Б</button>
-            <div class="splitter-hint"></div>
-            <div class="panel">
-              <div class="panel-title">Режим</div>
-              <select class="combo" style="width:100%">Просмотр — обычный</select>
-            </div>
-            <div class="panel">
-              <div class="panel-title">Масштаб</div>
-              <div class="btn-row">
-                <button class="btn btn-secondary" style="flex:1">+</button>
-                <button class="btn btn-secondary" style="flex:1">−</button>
-                <button class="btn btn-secondary" style="flex:1">↺</button>
-              </div>
-            </div>
-            <div class="panel">
-              <div class="panel-title">Цвет</div>
-              <div style="display:flex;gap:4px;flex-wrap:wrap">
-                <div style="width:22px;height:22px;border-radius:4px;background:#0078D4;cursor:pointer;border:2px solid var(--accent)"></div>
-                <div style="width:22px;height:22px;border-radius:4px;background:#107C10;cursor:pointer;border:2px solid transparent"></div>
-                <div style="width:22px;height:22px;border-radius:4px;background:#FFB900;cursor:pointer;border:2px solid transparent"></div>
-                <div style="width:22px;height:22px;border-radius:4px;background:#F75335;cursor:pointer;border:2px solid transparent"></div>
-              </div>
-              <button class="btn btn-secondary btn-block" style="margin-top:6px;font-size:10px">🌈 Настройки цвета</button>
-            </div>
-          </div>
-          <div class="main">
-            <div class="main-wide">
-              <div class="card-preview" style="flex:1">
-                <div class="card-sim">87 × 56 мм</div>
-              </div>
-              <div class="main-narrow">
-                <div class="panel">
-                  <div class="panel-title">Позиция</div>
-                  <div class="field-row">
-                    <span class="field-label">X</span>
-                    <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">10</span><button class="spin-btn">+</button></div>
-                    <span class="field-label">Y</span>
-                    <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">5</span><button class="spin-btn">+</button></div>
-                  </div>
-                </div>
-                <label class="chk"><div class="chk-box checked"></div>Синхронизировать стороны</label>
-              </div>
-            </div>
-            <div class="panel">
-              <div class="panel-title">Заказчик</div>
-              <input class="field" placeholder="Имя заказчика" value="ООО Ромашка" style="margin-bottom:6px">
-              <div class="field-row">
-                <input class="field" placeholder="Телефон" value="+7 495 000-00-00" style="flex:1">
-                <input class="field" placeholder="Email" value="info@romashka.ru" style="flex:1">
-              </div>
-            </div>
-            <div class="panel">
-              <div class="panel-title">Печать</div>
-              <div class="field-row">
-                <span class="field-label" style="min-width:50px">Тираж</span>
-                <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">200</span><button class="spin-btn">+</button></div>
-                <select class="combo" style="flex:1">Тип печати</select>
-              </div>
-              <div class="field-row">
-                <select class="combo" style="flex:1">Материал</select>
-                <select class="combo" style="flex:1">Покрытие</select>
-              </div>
-            </div>
-            <div class="btn-row">
-              <button class="btn btn-accent"><span style="margin-right:4px">💾</span>Сохранить</button>
-              <button class="btn btn-secondary">📄 Экспорт в PDF</button>
-            </div>
-            <div class="btn-row">
-              <button class="btn btn-primary" style="flex:1">🖨 Печать</button>
-              <button class="btn btn-secondary">Просмотр КП</button>
-            </div>
-          </div>
+        <div style="margin-top:8px">
+          <button class="btn tb-btn primary" style="width:100%;justify-content:center;font-size:10px;padding:5px 0">Загрузить Сторону А</button>
         </div>
-        <div class="win-statusbar"><span>Готово</span><span>UF Print v1.0</span><span>17:55</span></div>
+        <div style="margin-top:4px">
+          <button class="btn tb-btn" style="width:100%;justify-content:center;font-size:10px;padding:5px 0">Загрузить Сторону Б</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Режим</div>
+        <select class="combo">Просмотр — обычный</select>
+        <div style="margin-top:6px">
+          <label class="chk"><div class="chk-box checked"></div>Синхронное редактирование</label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Инструменты</div>
+        <div class="tool-row">
+          <button class="tb-btn" style="flex:1">+</button>
+          <button class="tb-btn" style="flex:1">−</button>
+          <button class="tb-btn" style="flex:1">↺</button>
+        </div>
+        <div style="font-size:9px;color:#888;text-align:center;margin-top:4px">Перетаскивайте мышкой<br>или используйте стрелки</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">CMYK Цвет</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <div style="width:24px;height:24px;border-radius:3px;background:#FF3B30;cursor:pointer;border:2px solid transparent"></div>
+          <div style="width:24px;height:24px;border-radius:3px;background:#34C759;cursor:pointer;border:2px solid transparent"></div>
+          <div style="width:24px;height:24px;border-radius:3px;background:#007AFF;cursor:pointer;border:2px solid transparent"></div>
+          <div style="width:24px;height:24px;border-radius:3px;background:#FFCC00;cursor:pointer;border:2px solid transparent"></div>
+        </div>
+        <button class="btn tb-btn" style="width:100%;margin-top:6px;font-size:9px;justify-content:center;padding:4px 0">🌈 Настройки цвета</button>
+        <button class="btn tb-btn" style="width:100%;margin-top:3px;font-size:9px;justify-content:center;padding:4px 0">🔄 Сбросить изображение</button>
       </div>
     </div>
 
-    <!-- ============ VARIANT 2: Dark Acrylic ============ -->
-    <div class="variant">
-      <div class="variant-label">Dark · Acrylic</div>
-      <div class="win dark acrylic" data-theme="dark">
-        <div class="win-titlebar">
-          <div class="win-dot win-dot-r"></div>
-          <div class="win-dot win-dot-y"></div>
-          <div class="win-dot win-dot-g"></div>
-          <div class="win-caption">UF Print — Двусторонняя печать</div>
+    <!-- Center: Working Zone -->
+    <div class="main-center">
+      <!-- Top: Preview + Quick Settings -->
+      <div style="display:flex;gap:10px">
+        <div class="card-preview" style="flex:0 0 160px">
+          <div class="card-sim">87 × 56 мм</div>
+          <div class="card-meta">Формат карты</div>
         </div>
-        <div class="toolbar">
-          <span class="toolbar-brand">UF Print</span>
-          <span class="chip active"><span class="chip-icon">✏️</span>Редактор</span>
-          <span class="chip"><span class="chip-icon">📋</span>Заказы</span>
-          <span class="chip"><span class="chip-icon">⚙️</span>Настройки</span>
-          <span style="flex:1"></span>
-          <span class="chip" style="background:#1E3A2E;border-color:#1E4A2E;color:#5AE8A0">🖨 HP M404dn · Готов</span>
-        </div>
-        <div class="content">
-          <div class="sidebar">
-            <button class="side-btn active"><span class="ico">📄</span>Сторона А</button>
-            <button class="side-btn"><span class="ico">📄</span>Сторона Б (превью)</button>
-            <div class="splitter-hint"></div>
-            <div class="panel">
-              <div class="panel-title">Инструменты</div>
-              <div class="btn-row">
-                <button class="btn btn-secondary" style="flex:1;font-size:14px;font-weight:700">+</button>
-                <button class="btn btn-secondary" style="flex:1;font-size:14px;font-weight:700">−</button>
-                <button class="btn btn-secondary" style="flex:1">&circlearrowleft;</button>
-              </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div class="panel">
+            <div class="panel-title">Настройки печати</div>
+            <div class="field-row">
+              <span class="field-label">Ориентация</span>
+              <select class="combo">Альбомная (ландшафт)</select>
             </div>
-            <div class="panel">
-              <div class="panel-title">Эрасер</div>
-              <div style="height:6px;background:var(--border-subtle);border-radius:3px;position:relative">
-                <div style="width:45%;height:100%;background:var(--accent);border-radius:3px;cursor:pointer"></div>
-              </div>
+            <div class="field-row">
+              <span class="field-label">Поля L</span>
+              <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">30</span><button class="spin-btn">+</button></div>
+              <span class="field-label">R</span>
+              <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">30</span><button class="spin-btn">+</button></div>
             </div>
-            <div class="panel">
-              <div class="panel-title">CMYK</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
-                <div style="height:18px;background:#FF4444;border-radius:3px;cursor:pointer;border:2px solid transparent"></div>
-                <div style="height:18px;background:#44FF44;border-radius:3px;cursor:pointer;border:2px solid transparent"></div>
-                <div style="height:18px;background:#4444FF;border-radius:3px;cursor:pointer;border:2px solid transparent"></div>
-                <div style="height:18px;background:#FFFF44;border-radius:3px;cursor:pointer;border:2px solid transparent"></div>
-              </div>
+            <div class="field-row">
+              <span class="field-label">Поля T / B</span>
+              <div class="spin-wrap" style="width:60px"><button class="spin-btn">−</button><span class="spin-val">30</span><button class="spin-btn">+</button></div>
+              <span style="font-size:10px;color:#888;margin:0 4px">мм</span>
             </div>
           </div>
-          <div class="main">
-            <div class="main-wide">
-              <div class="card-preview" style="flex:1;background:#16213e;border-color:#2a3a5e">
-                <div class="card-sim" style="background:linear-gradient(135deg,#1a1a2e,#2a2a4e);border-color:#3a4a6e;color:#888">87 × 56 мм</div>
-              </div>
-              <div class="main-narrow">
-                <div class="panel">
-                  <div class="panel-title">Данные заказчика</div>
-                  <input class="field" placeholder="Имя" value="ООО Ромашка" style="margin-bottom:6px">
-                  <input class="field" placeholder="Телефон" value="+7 495 000-00-00">
-                </div>
-                <div class="panel">
-                  <div class="panel-title">Параметры печати</div>
-                  <div class="field-row">
-                    <span class="field-label">Копии</span>
-                    <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">200</span><button class="spin-btn">+</button></div>
-                  </div>
-                  <div class="field-row">
-                    <select class="combo" style="flex:1">Ориентация</select>
-                    <select class="combo" style="flex:1">Бумага</select>
-                  </div>
-                  <div class="field-row">
-                    <select class="combo" style="flex:1">Ламинация</select>
-                    <div class="toggle-row" style="width:100%">
-                      <div class="toggle-opt active">Аккуратно</div>
-                      <div class="toggle-opt">В ленте</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="btn-row">
-              <button class="btn btn-accent btn-block"><span style="margin-right:4px">💾</span>Сохранить заказ</button>
-            </div>
-            <div class="btn-row">
-              <button class="btn btn-primary" style="flex:2">🖨 Печать</button>
-              <button class="btn btn-secondary" style="flex:1">📄 PDF</button>
-              <button class="btn btn-secondary" style="flex:1">КП</button>
-            </div>
-            <div class="log-console">
-              <span class="ts">[17:55:01]</span> Приложение запущено<br>
-              <span class="ts">[17:55:02]</span> HP LaserJet Pro · Готов<br>
-              <span class="ts">[17:55:03]</span> Ожидание изображений…
+          <div class="panel">
+            <div class="panel-title">Масштаб изображения</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:10px;color:#888">100%</span>
+              <div class="progress-track" style="flex:1"><div class="progress-fill"></div></div>
+              <span style="font-size:10px;color:#888">100%</span>
             </div>
           </div>
         </div>
-        <div class="win-statusbar"><span>🌙 Готово</span><span>UF Print v1.0</span><span>17:55</span></div>
+      </div>
+
+      <!-- Bottom: Order Data Table -->
+      <div class="panel">
+        <div class="panel-title">Данные заказа</div>
+        <div class="data-row">
+          <span class="data-key">Заказчик</span>
+          <input class="field" value="ООО АльфаБанковские карты" style="flex:1">
+        </div>
+        <div class="data-row">
+          <span class="data-key">Телефон</span>
+          <input class="field" value="+7 495 123-45-67" style="flex:1">
+          <span class="data-key">Email</span>
+          <input class="field" value="info@alfabank.ru" style="flex:1">
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <div style="flex:1">
+            <span class="field-label">Данные компании</span>
+            <input class="field" value="АО Альфа-Банк" style="width:100%">
+          </div>
+          <div style="flex:1">
+            <span class="field-label">Номер заказа</span>
+            <input class="field" value="ORD-2026-042" style="width:100%">
+          </div>
+          <div style="flex:1">
+            <span class="field-label">Срок изготовления</span>
+            <input class="field" value="10 рабочих дней" style="width:100%">
+          </div>
+        </div>
+      </div>
+
+      <!-- Print Parameters -->
+      <div class="panel">
+        <div class="panel-title">Параметры печати</div>
+        <div class="data-row">
+          <span class="data-key">Тирраж</span>
+          <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">1000</span><button class="spin-btn">+</button></div>
+          <span class="field-label" style="min-width:60px">Тип печати</span>
+          <select class="combo" style="max-width:140px">Флексопечать</select>
+          <span class="field-label" style="min-width:60px">Материал</span>
+          <select class="combo" style="max-width:140px">Премиум картон 350 г/м²</select>
+        </div>
+        <div class="data-row">
+          <span class="data-key">Покрытие</span>
+          <select class="combo" style="max-width:160px">Матовый лак</select>
+          <span class="field-label" style="min-width:60px">Кол-во копий</span>
+          <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">1</span><button class="spin-btn">+</button></div>
+        </div>
+      </div>
+
+      <!-- Log Console -->
+      <div class="log-panel">
+        <div class="log-line"><span class="log-ts">[17:55:01]</span><span class="log-ok">Приложение запущено</span></div>
+        <div class="log-line"><span class="log-ts">[17:55:02]</span><span class="log-ok">HP LaserJet Pro M404dn · Готово</span></div>
+        <div class="log-line"><span class="log-ts">[17:55:03]</span><span class="log-warn">Загрузка изображений…</span></div>
+        <div class="log-line"><span class="log-ts">[17:55:04]</span><span class="log-ok">Сторона А загружена (2456 × 1588 px)</span></div>
+        <div class="log-line"><span class="log-ts">[17:55:04]</span><span class="log-msg">Сторона Б ожидает…</span></div>
+        <div class="log-line"><span class="log-ts">[17:55:04]</span><span class="log-warn">Нажмите «Печать» для начала</span></div>
       </div>
     </div>
 
-    <!-- ============ VARIANT 3: Compact WinUI ============ -->
-    <div class="variant">
-      <div class="variant-label">Compact · Navigation Pane</div>
-      <div class="win compact">
-        <div class="win-titlebar mica">
-          <div class="win-dot win-dot-r"></div>
-          <div class="win-dot win-dot-y"></div>
-          <div class="win-dot win-dot-g"></div>
-          <div class="win-caption">UF Print</div>
+    <!-- Right Panel -->
+    <div class="main-right">
+      <div class="panel">
+        <div class="panel-title">Выбор стороны</div>
+        <label class="chk"><div class="chk-box checked"></div>Сторона А</label>
+        <label class="chk"><div class="chk-box"></div>Сторона Б</label>
+        <label class="chk"><div class="chk-box"></div>Обе стороны (двусторонняя)</label>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Компания</div>
+        <div class="data-row">
+          <span class="data-key">Название</span>
+          <input class="field" value="АО Альфа-Банк" style="font-size:10px">
         </div>
-        <div class="win-body" style="padding:0;display:flex;height:auto">
-          <nav style="width:52px;background:var(--bg-subtle);border-right:1px solid var(--border-subtle);padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
-            <div style="font-size:16px;font-weight:800;background:linear-gradient(135deg,var(--accent),#5856D6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;padding:8px 0 12px">UF</div>
-            <button class="side-btn active" style="justify-content:center;padding:8px;flex-direction:column;gap:2px;font-size:8px;width:48px"><span style="font-size:18px">✏️</span>Ред</button>
-            <button class="side-btn" style="justify-content:center;padding:8px;flex-direction:column;gap:2px;font-size:8px;width:48px"><span style="font-size:18px">📋</span>Заказы</button>
-            <button class="side-btn" style="justify-content:center;padding:8px;flex-direction:column;gap:2px;font-size:8px;width:48px"><span style="font-size:18px">⚙️</span>Настр</button>
-            <div style="flex:1"></div>
-            <button class="side-btn" style="justify-content:center;padding:8px;flex-direction:column;gap:2px;font-size:8px;width:48px"><span style="font-size:18px">🖨️</span>Прин</button>
-          </nav>
-          <div style="flex:1;display:flex;flex-direction:column;gap:0">
-            <div class="tabs" style="background:var(--bg-subtle)"><span class="tab active">Печать</span><span class="tab">КП</span><span class="tab">История</span><span style="flex:1"></span><span class="chip" style="font-size:9px;padding:2px 8px">🖨 HP M404dn</span></div>
-            <div style="display:flex;gap:var(--sg);padding:var(--sg);flex:1">
-              <div class="card-preview" style="flex:0 0 180px;padding:var(--sg-md)">
-                <div class="card-sim" style="width:85%">87×56 мм</div>
-              </div>
-              <div style="flex:1;display:flex;flex-direction:column;gap:var(--sg-sm)">
-                <div class="field-row"><span class="field-label" style="min-width:60px;flex-shrink:0">Имя</span><input class="field" value="ООО Ромашка" style="font-size:11px"></div>
-                <div class="field-row"><span class="field-label" style="min-width:60px;flex-shrink:0">Телефон</span><input class="field" value="+7 495 000-00-00" style="font-size:11px"></div>
-                <div class="field-row"><span class="field-label" style="min-width:60px;flex-shrink:0">Тираж</span><div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">200</span><button class="spin-btn">+</button></div></div>
-                <div class="field-row">
-                  <select class="combo" style="flex:1;font-size:11px">Тип</select>
-                  <select class="combo" style="flex:1;font-size:11px">Покрытие</select>
-                </div>
-                <label class="chk" style="font-size:11px"><div class="chk-box checked"></div>Двусторонняя</label>
-              </div>
-            </div>
-            <div class="btn-row" style="padding:0 var(--sg) var(--sg)">
-              <button class="btn btn-primary" style="flex:1">🖨 Печать</button>
-              <button class="btn btn-secondary">📄 PDF</button>
-              <button class="btn btn-secondary">💾 Сохранить</button>
-            </div>
-          </div>
+        <div class="data-row">
+          <span class="data-key">Адрес</span>
+          <input class="field" value="Москва, Тверская 10" style="font-size:10px">
         </div>
-        <div class="win-statusbar"><span>✅ Готово</span><span>UF Print v1.0</span><span>17:55</span></div>
+        <div class="data-row">
+          <span class="data-key">Телефон</span>
+          <input class="field" value="+7 495 123-45-67" style="font-size:10px">
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:auto">
+        <div class="panel-title">Действия</div>
+        <button class="btn tb-btn secondary" style="width:100%;justify-content:center;font-size:10px;padding:5px 0;margin-bottom:4px">📄 Просмотр КП</button>
+        <button class="btn tb-btn primary" style="width:100%;justify-content:center;font-size:10px;padding:5px 0">🖨 Печать сейчас</button>
       </div>
     </div>
 
   </div>
+
+  <!-- ===== Status Bar ===== -->
+  <div class="statusbar">
+    <span>🟢 Готово</span>
+    <span>
+      <span>Заказчик:</span><span class="sep"></span><span>ООО АльфаБанковские карты</span><span class="sep">|</span><span>Тираж:</span><span class="sep"></span><span>1000 шт.</span>
+    </span>
+    <span>UF Print v1.0<span class="sep"></span>17:55</span>
+  </div>
+
 </div>
 
 </body>
