@@ -17,14 +17,16 @@ def load_company_settings():
     config_path = get_config_path()
     empty = {key: "" for key in CONFIG_KEYS}
     if not os.path.exists(config_path):
+        empty["company_address"] = "г. Москва, Стахановская 8"
+        empty["company_phone"] = "8 (495) 946-21-86"
         return empty
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         return {
             "company_name": data.get("company_name", ""),
-            "company_address": data.get("company_address", ""),
-            "company_phone": data.get("company_phone", ""),
+            "company_address": data.get("company_address", "г. Москва, Стахановская 8"),
+            "company_phone": data.get("company_phone", "8 (495) 946-21-86"),
             "company_logo": data.get("company_logo", ""),
         }
     except Exception as exc:

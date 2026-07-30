@@ -103,6 +103,7 @@ a = Analysis(
         'ufprint.pdf_export',
         'ufprint.editor',
         'ufprint.app_window',
+        'ufprint.color_dialog',
     ],
     hookspath=[],
     hooksconfig={},

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UF Print — Desktop Preview</title>
+<style>
+  /* ===== Reset & Base ===== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif; background: #1a1a1a; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; color: #201F1E; }
+
+  /* ===== Window Shell ===== */
+  .win { width: 870px; background: #F3F3F3; border-radius: 8px; overflow: hidden; box-shadow: 0 12px 48px rgba(0,0,0,0.35); display: flex; flex-direction: column; }
+  .win.dark { background: #2B2B2B; color: #F3F3F3; }
+  .win.dark .toolbar { background: #333; border-bottom-color: #444; }
+  .win.dark .toolbar .brand { color: #0078D4; }
+  .win.dark .tb-btn { color: #CCC; }
+  .win.dark .tb-btn:hover { background: #444; color: #FFF; }
+  .win.dark .tb-btn:active { background: #0078D4; }
+  .win.dark .field { background: #3C3C3C; border-color: #555; color: #F3F3F3; }
+  .win.dark .field:focus { border-color: #0078D4; }
+  .win.dark .combo { background: #3C3C3C; border-color: #555; color: #F3F3F3; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23CCC'/%3E%3C/svg%3E"); }
+  .win.dark .spin-btn { color: #CCC; background: #3C3C3C; }
+  .win.dark .spin-val { color: #F3F3F3; }
+  .win.dark .panel { background: #252526; border-color: #3F3F46; }
+  .win.dark .panel-title { color: #9A9A9A; }
+  .win.dark .chip { background: #3C3C3C; border-color: #555; color: #CCC; }
+  .win.dark .chip:hover { background: #444; }
+  .win.dark .chk { color: #F3F3F3; }
+  .win.dark .chk-box { border-color: #777; background: #3C3C3C; }
+  .win.dark .chk-box.checked { background: #0078D4; border-color: #0078D4; }
+  .win.dark .log-panel { background: #1E1E1E; border-color: #333; }
+  .win.dark .log-line { color: #6EE76E; }
+  .win.dark .log-ts { color: #6B6B6B; }
+  .win.dark .log-warn { color: #FFD700; }
+  .win.dark .log-ok { color: #4EC9B0; }
+  .win.dark .statusbar { background: #252526; border-top-color: #3F3F46; color: #888; }
+
+  /* ===== Menu Bar ===== */
+  .menubar { display: flex; background: #F0F0F0; border-bottom: 1px solid #D0D0D0; padding: 0 4px; min-height: 24px; }
+  .win.dark .menubar { background: #2B2B2B; border-bottom-color: #3F3F46; }
+  .menu-item { padding: 2px 10px; font-size: 11px; color: #201F1E; cursor: pointer; border-radius: 2px; white-space: nowrap; }
+  .menu-item:hover { background: #0078D4; color: #FFF; }
+  .menu-sep { width: 1px; background: #D0D0D0; margin: 3px 4px; }
+  .win.dark .menu-sep { background: #3F3F46; }
+
+  /* ===== Toolbar ===== */
+  .toolbar { display: flex; align-items: center; padding: 4px 8px; background: #FFF; border-bottom: 1px solid #E0E0E0; gap: 4px; min-height: 36px; }
+  .tb-btn { padding: 4px 10px; background: transparent; border: 1px solid transparent; border-radius: 3px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; color: #333; font-family: inherit; }
+  .tb-btn:hover { background: #E8E8E8; border-color: #D0D0D0; }
+  .tb-btn:active { background: #D0D0D0; }
+  .tb-btn.primary { background: #0078D4; color: #FFF; border-color: #0078D4; font-weight: 600; }
+  .tb-btn.primary:hover { background: #106EBE; }
+  .tb-sep { width: 1px; height: 18px; background: #D0D0D0; margin: 0 4px; }
+  .toolbar-spacer { flex: 1; }
+  .brand { font-size: 12px; font-weight: 700; color: #0078D4; margin-right: 12px; letter-spacing: -0.2px; }
+
+  /* ===== Main Content Area ===== */
+  .main { display: flex; flex: 1; min-height: 0; }
+  .main-left { width: 220px; flex-shrink: 0; border-right: 1px solid #E0E0E0; padding: 10px; display: flex; flex-direction: column; gap: 10px; background: #FAFAFA; }
+  .win.dark .main-left { background: #1E1E1E; border-right-color: #3F3F46; }
+  .main-center { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
+  .main-right { width: 200px; flex-shrink: 0; border-left: 1px solid #E0E0E0; padding: 10px; display: flex; flex-direction: column; gap: 10px; background: #FAFAFA; }
+  .win.dark .main-right { background: #1E1E1E; border-left-color: #3F3F46; }
+
+  /* ===== Form Elements ===== */
+  .field { background: #FFF; border: 1px solid #C8C6C4; border-radius: 3px; padding: 5px 8px; font-size: 11px; font-family: inherit; color: #201F1E; outline: none; width: 100%; }
+  .field:focus { border-color: #0078D4; box-shadow: 0 0 0 1px rgba(0,120,212,0.2); }
+  .field-label { font-size: 10px; color: #605E5C; margin-bottom: 3px; display: block; font-weight: 500; }
+  .combo { background: #FFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23605E5C'/%3E%3C/svg%3E") no-repeat right 6px center; border: 1px solid #C8C6C4; border-radius: 3px; padding: 5px 24px 5px 8px; font-size: 11px; font-family: inherit; color: #201F1E; appearance: none; -webkit-appearance: none; outline: none; cursor: pointer; width: 100%; }
+  .combo:focus { border-color: #0078D4; box-shadow: 0 0 0 1px rgba(0,120,212,0.2); }
+  .spin-wrap { display: flex; align-items: center; border: 1px solid #C8C6C4; border-radius: 3px; overflow: hidden; background: #FFF; width: 80px; }
+  .spin-btn { width: 22px; height: 20px; background: transparent; border: none; cursor: pointer; font-size: 11px; color: #605E5C; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .spin-btn:hover { background: #E8E8E8; }
+  .spin-val { flex: 1; text-align: center; font-size: 11px; font-family: inherit; border: none; outline: none; background: transparent; color: #201F1E; padding: 3px 0; font-weight: 500; }
+
+  /* ===== Panels ===== */
+  .panel { background: #FFF; border: 1px solid #E1DFDD; border-radius: 4px; padding: 10px; }
+  .panel-title { font-size: 10px; color: #605E5C; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 8px; }
+  .field-group { margin-bottom: 8px; }
+  .field-group:last-child { margin-bottom: 0; }
+  .field-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .field-row .field { flex: 1; }
+  .field-row .field-label { min-width: 50px; margin-bottom: 0; flex-shrink: 0; }
+
+  /* ===== Chips / Tabs ===== */
+  .chip { padding: 3px 10px; font-size: 10px; background: #F3F3F3; border: 1px solid #D0CFCF; border-radius: 10px; color: #333; cursor: pointer; white-space: nowrap; font-family: inherit; }
+  .chip:hover { background: #E8E8E8; }
+  .chip.active { background: #0078D4; color: #FFF; border-color: #0078D4; }
+
+  /* ===== Card Preview ===== */
+  .card-preview { background: #F8F8F8; border: 1px solid #E0E0E0; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+  .card-sim { width: 60%; height: 40px; background: linear-gradient(135deg, #E8F0FE, #D0E0FA); border-radius: 3px; border: 1px solid #B0C8E8; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #666; }
+  .card-meta { font-size: 9px; color: #888; }
+
+  /* ===== Checkbox ===== */
+  .chk { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #201F1E; cursor: pointer; padding: 2px 0; }
+  .chk-box { width: 14px; height: 14px; border: 1.5px solid #C8C6C4; border-radius: 2px; background: #FFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; color: #FFF; }
+  .chk-box.checked { background: #0078D4; border-color: #0078D4; }
+
+  /* ===== Statusbar ===== */
+  .statusbar { height: 24px; background: #F5F5F5; border-top: 1px solid #E0E0E0; display: flex; align-items: center; padding: 0 10px; font-size: 9px; color: #888; justify-content: space-between; flex-shrink: 0; }
+  .statusbar .sep { margin: 0 8px; color: #D0D0D0; }
+
+  /* ===== Log Console ===== */
+  .log-panel { background: #1E1E1E; border-radius: 3px; padding: 8px 10px; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 10px; line-height: 1.5; max-height: 120px; overflow-y: auto; flex-shrink: 0; }
+  .log-line { display: flex; gap: 6px; }
+  .log-ts { color: #6B6B6B; min-width: 50px; }
+  .log-msg { color: #6EE76E; }
+  .log-warn { color: #FFD700; }
+  .log-err { color: #F75335; }
+  .log-ok { color: #4EC9B0; }
+
+  /* ===== Toolbar Row ===== */
+  .tool-row { display: flex; gap: 4px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .tool-row .lbl { font-size: 10px; color: #605E5C; min-width: 50px; font-weight: 500; }
+
+  /* ===== Preview + Settings split ===== */
+  .preview-col { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .settings-col { width: 260px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+
+  /* ===== Progress Bar ===== */
+  .progress-track { height: 4px; background: #E0E0E0; border-radius: 2px; overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; background: #0078D4; border-radius: 2px; width: 65%; }
+
+  /* ===== Table-like data grid (for settings rows) ===== */
+  .data-row { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid #F0F0F0; font-size: 11px; gap: 8px; }
+  .data-row:last-child { border-bottom: none; }
+  .data-key { color: #605E5C; min-width: 70px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .data-val { flex: 1; color: #201F1E; font-weight: 500; }
+  .data-val input, .data-val select { max-width: 110px; }
+</style>
+</head>
+<body>
+
+<div class="win">
+
+  <!-- ===== Menu Bar ===== -->
+  <div class="menubar">
+    <span class="menu-item">Файл</span>
+    <span class="menu-item">Редактировать</span>
+    <span class="menu-item">Печать</span>
+    <span class="menu-item">Вид</span>
+    <span class="menu-item">? </span>
+    <span class="menu-sep"></span>
+    <span style="flex:1"></span>
+    <span class="menu-item" style="color:#888">UF Print v1.0</span>
+  </div>
+
+  <!-- ===== Toolbar ===== -->
+  <div class="toolbar">
+    <span class="brand">UF Print</span>
+    <button class="tb-btn">📄 Сторона А</button>
+    <button class="tb-btn">📄 Сторона Б</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn">🔄 Сброс</button>
+    <button class="tb-btn">🌈 Цвет</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn">💾 Сохранить заказ</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn primary">📄 Экспорт в PDF</button>
+    <div class="toolbar-spacer"></div>
+    <span style="font-size:10px;color:#888">🖨 HP LaserJet Pro M404dn</span>
+  </div>
+
+  <!-- ===== Main Content ===== -->
+  <div class="main">
+
+    <!-- Left Panel -->
+    <div class="main-left">
+      <div class="panel">
+        <div class="panel-title">Загрузка изображений</div>
+        <div class="data-row">
+          <span class="data-key">Сторона А</span>
+          <span class="data-val" style="font-size:10px;color:#107C10">✓ business_card_A.png</span>
+        </div>
+        <div class="data-row">
+          <span class="data-key">Сторона Б</span>
+          <span class="data-val" style="font-size:10px;color:#FFB900">● waiting…</span>
+        </div>
+        <div style="margin-top:8px">
+          <button class="btn tb-btn primary" style="width:100%;justify-content:center;font-size:10px;padding:5px 0">Загрузить Сторону А</button>
+        </div>
+        <div style="margin-top:4px">
+          <button class="btn tb-btn" style="width:100%;justify-content:center;font-size:10px;padding:5px 0">Загрузить Сторону Б</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Режим</div>
+        <select class="combo">Просмотр — обычный</select>
+        <div style="margin-top:6px">
+          <label class="chk"><div class="chk-box checked"></div>Синхронное редактирование</label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Инструменты</div>
+        <div class="tool-row">
+          <button class="tb-btn" style="flex:1">+</button>
+          <button class="tb-btn" style="flex:1">−</button>
+          <button class="tb-btn" style="flex:1">↺</button>
+        </div>
+        <div style="font-size:9px;color:#888;text-align:center;margin-top:4px">Перетаскивайте мышкой<br>или используйте стрелки</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">CMYK Цвет</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <div style="width:24px;height:24px;border-radius:3px;background:#FF3B30;cursor:pointer;border:2px solid transparent"></div>
+          <div style="width:24px;height:24px;border-radius:3px;background:#34C759;cursor:pointer;border:2px solid transparent"></div>
+          <div style="width:24px;height:24px;border-radius:3px;background:#007AFF;cursor:pointer;border:2px solid transparent"></div>
+          <div style="width:24px;height:24px;border-radius:3px;background:#FFCC00;cursor:pointer;border:2px solid transparent"></div>
+        </div>
+        <button class="btn tb-btn" style="width:100%;margin-top:6px;font-size:9px;justify-content:center;padding:4px 0">🌈 Настройки цвета</button>
+        <button class="btn tb-btn" style="width:100%;margin-top:3px;font-size:9px;justify-content:center;padding:4px 0">🔄 Сбросить изображение</button>
+      </div>
+    </div>
+
+    <!-- Center: Working Zone -->
+    <div class="main-center">
+      <!-- Top: Preview + Quick Settings -->
+      <div style="display:flex;gap:10px">
+        <div class="card-preview" style="flex:0 0 160px">
+          <div class="card-sim">87 × 56 мм</div>
+          <div class="card-meta">Формат карты</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div class="panel">
+            <div class="panel-title">Настройки печати</div>
+            <div class="field-row">
+              <span class="field-label">Ориентация</span>
+              <select class="combo">Альбомная (ландшафт)</select>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Поля L</span>
+              <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">30</span><button class="spin-btn">+</button></div>
+              <span class="field-label">R</span>
+              <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">30</span><button class="spin-btn">+</button></div>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Поля T / B</span>
+              <div class="spin-wrap" style="width:60px"><button class="spin-btn">−</button><span class="spin-val">30</span><button class="spin-btn">+</button></div>
+              <span style="font-size:10px;color:#888;margin:0 4px">мм</span>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Масштаб изображения</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:10px;color:#888">100%</span>
+              <div class="progress-track" style="flex:1"><div class="progress-fill"></div></div>
+              <span style="font-size:10px;color:#888">100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom: Order Data Table -->
+      <div class="panel">
+        <div class="panel-title">Данные заказа</div>
+        <div class="data-row">
+          <span class="data-key">Заказчик</span>
+          <input class="field" value="ООО АльфаБанковские карты" style="flex:1">
+        </div>
+        <div class="data-row">
+          <span class="data-key">Телефон</span>
+          <input class="field" value="+7 495 123-45-67" style="flex:1">
+          <span class="data-key">Email</span>
+          <input class="field" value="info@alfabank.ru" style="flex:1">
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <div style="flex:1">
+            <span class="field-label">Данные компании</span>
+            <input class="field" value="АО Альфа-Банк" style="width:100%">
+          </div>
+          <div style="flex:1">
+            <span class="field-label">Номер заказа</span>
+            <input class="field" value="ORD-2026-042" style="width:100%">
+          </div>
+          <div style="flex:1">
+            <span class="field-label">Срок изготовления</span>
+            <input class="field" value="10 рабочих дней" style="width:100%">
+          </div>
+        </div>
+      </div>
+
+      <!-- Print Parameters -->
+      <div class="panel">
+        <div class="panel-title">Параметры печати</div>
+        <div class="data-row">
+          <span class="data-key">Тирраж</span>
+          <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">1000</span><button class="spin-btn">+</button></div>
+          <span class="field-label" style="min-width:60px">Тип печати</span>
+          <select class="combo" style="max-width:140px">Флексопечать</select>
+          <span class="field-label" style="min-width:60px">Материал</span>
+          <select class="combo" style="max-width:140px">Премиум картон 350 г/м²</select>
+        </div>
+        <div class="data-row">
+          <span class="data-key">Покрытие</span>
+          <select class="combo" style="max-width:160px">Матовый лак</select>
+          <span class="field-label" style="min-width:60px">Кол-во копий</span>
+          <div class="spin-wrap"><button class="spin-btn">−</button><span class="spin-val">1</span><button class="spin-btn">+</button></div>
+        </div>
+      </div>
+
+      <!-- Log Console -->
+      <div class="log-panel">
+        <div class="log-line"><span class="log-ts">[17:55:01]</span><span class="log-ok">Приложение запущено</span></div>
+        <div class="log-line"><span class="log-ts">[17:55:02]</span><span class="log-ok">HP LaserJet Pro M404dn · Готово</span></div>
+        <div class="log-line"><span class="log-ts">[17:55:03]</span><span class="log-warn">Загрузка изображений…</span></div>
+        <div class="log-line"><span class="log-ts">[17:55:04]</span><span class="log-ok">Сторона А загружена (2456 × 1588 px)</span></div>
+        <div class="log-line"><span class="log-ts">[17:55:04]</span><span class="log-msg">Сторона Б ожидает…</span></div>
+        <div class="log-line"><span class="log-ts">[17:55:04]</span><span class="log-warn">Нажмите «Печать» для начала</span></div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="main-right">
+      <div class="panel">
+        <div class="panel-title">Выбор стороны</div>
+        <label class="chk"><div class="chk-box checked"></div>Сторона А</label>
+        <label class="chk"><div class="chk-box"></div>Сторона Б</label>
+        <label class="chk"><div class="chk-box"></div>Обе стороны (двусторонняя)</label>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Компания</div>
+        <div class="data-row">
+          <span class="data-key">Название</span>
+          <input class="field" value="АО Альфа-Банк" style="font-size:10px">
+        </div>
+        <div class="data-row">
+          <span class="data-key">Адрес</span>
+          <input class="field" value="Москва, Тверская 10" style="font-size:10px">
+        </div>
+        <div class="data-row">
+          <span class="data-key">Телефон</span>
+          <input class="field" value="+7 495 123-45-67" style="font-size:10px">
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:auto">
+        <div class="panel-title">Действия</div>
+        <button class="btn tb-btn secondary" style="width:100%;justify-content:center;font-size:10px;padding:5px 0;margin-bottom:4px">📄 Просмотр КП</button>
+        <button class="btn tb-btn primary" style="width:100%;justify-content:center;font-size:10px;padding:5px 0">🖨 Печать сейчас</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== Status Bar ===== -->
+  <div class="statusbar">
+    <span>🟢 Готово</span>
+    <span>
+      <span>Заказчик:</span><span class="sep"></span><span>ООО АльфаБанковские карты</span><span class="sep">|</span><span>Тираж:</span><span class="sep"></span><span>1000 шт.</span>
+    </span>
+    <span>UF Print v1.0<span class="sep"></span>17:55</span>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,6 +1,8 @@
 """Main application window for UF Print."""
 
 import logging
+import os
+import tempfile
 import traceback
 from datetime import datetime
 
@@ -33,11 +35,16 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from ufprint.color_dialog import ColorSettingsDialog
 from ufprint import company_config
 from ufprint import orders
 from ufprint.editor import ImageEditor
 from ufprint.paths import normalize_path
-from ufprint.pdf_export import export_commercial_offer_pdf, export_print_pdf
+from ufprint.pdf_export import (
+    export_commercial_offer_pdf,
+    export_print_pdf,
+    export_print_pdf_single,
+)
 from ufprint.styles import APP_STYLESHEET
 
 
@@ -219,6 +226,10 @@ class CardPrintingApp(QMainWindow):
 
         layout.addWidget(cmyk_group)
 
+        color_settings_btn = QPushButton("Настройки цвета")
+        color_settings_btn.clicked.connect(self.open_color_settings)
+        layout.addWidget(color_settings_btn)
+
         reset_btn = QPushButton("Сбросить изображение")
         reset_btn.clicked.connect(self.reset_current_image)
         layout.addWidget(reset_btn)
@@ -252,9 +263,6 @@ class CardPrintingApp(QMainWindow):
         self.company_name = QLineEdit()
         company_layout.addRow("Название компании:", self.company_name)
 
-        self.customer_contact_person = QLineEdit()
-        company_layout.addRow("Заказчик:", self.customer_contact_person)
-
         self.order_number = QLineEdit()
         company_layout.addRow("Номер заказа:", self.order_number)
 
@@ -275,8 +283,8 @@ class CardPrintingApp(QMainWindow):
         company_layout.addRow("Материал:", self.paper_type)
 
         self.lamination = QComboBox()
-        self.lamination.addItems(["Без ламинации", "Матовая", "Глянцевая", "Soft Touch"])
-        company_layout.addRow("Ламинация:", self.lamination)
+        self.lamination.addItems(["Без лака", "Матовый", "Глянцевый"])
+        company_layout.addRow("Лак:", self.lamination)
 
         self.additional_specs = QTextEdit()
         self.additional_specs.setMaximumHeight(100)
@@ -294,10 +302,23 @@ class CardPrintingApp(QMainWindow):
         export_btn.clicked.connect(self.export_pdf)
         layout.addWidget(export_btn)
 
+        self.btn_export_a = QPushButton("Сторона А")
+        self.btn_export_a.clicked.connect(self.export_pdf_side_a)
+        layout.addWidget(self.btn_export_a)
+
+        self.btn_export_b = QPushButton("Сторона Б")
+        self.btn_export_b.clicked.connect(self.export_pdf_side_b)
+        layout.addWidget(self.btn_export_b)
+
         self.btn_generate_kp = QPushButton("Сформировать КП в PDF")
         self.btn_generate_kp.setObjectName("btnPrimary")
         self.btn_generate_kp.clicked.connect(self.generate_commercial_offer_pdf)
         layout.addWidget(self.btn_generate_kp)
+
+        self.btn_preview_kp = QPushButton("Просмотр КП")
+        self.btn_preview_kp.setObjectName("btnPreview")
+        self.btn_preview_kp.clicked.connect(self.preview_commercial_offer_pdf)
+        layout.addWidget(self.btn_preview_kp)
 
         self.tab_widget.addTab(customer_tab, "Данные заказа")
 
@@ -540,6 +561,10 @@ class CardPrintingApp(QMainWindow):
         for editor in self.active_editors():
             editor.apply_cmyk_color(c, m, y, k)
 
+    def open_color_settings(self):
+        dialog = ColorSettingsDialog(self)
+        dialog.exec()
+
     def apply_zoom(self, factor):
         for editor in self.active_editors():
             editor.zoom_image(factor)
@@ -659,7 +684,6 @@ class CardPrintingApp(QMainWindow):
             "paper_type": self.paper_type.currentText(),
             "lamination": self.lamination.currentText(),
             "additional": self.additional_specs.toPlainText(),
-            "customer_contact": self.customer_contact_person.text().strip(),
             "order_number": self.order_number.text().strip(),
             "production_deadline": self.production_deadline.text().strip(),
         }
@@ -713,9 +737,8 @@ class CardPrintingApp(QMainWindow):
             self.print_quantity.setValue(specs.get("quantity", 100))
             self.print_type.setCurrentText(specs.get("print_type", "Цифровая печать"))
             self.paper_type.setCurrentText(specs.get("paper_type", "Пластик PVC"))
-            self.lamination.setCurrentText(specs.get("lamination", "Без ламинации"))
+            self.lamination.setCurrentText(specs.get("lamination", "Без лака"))
             self.additional_specs.setText(specs.get("additional", ""))
-            self.customer_contact_person.setText(specs.get("customer_contact", ""))
             self.order_number.setText(specs.get("order_number", ""))
             self.production_deadline.setText(specs.get("production_deadline", ""))
 
@@ -784,6 +807,47 @@ class CardPrintingApp(QMainWindow):
             logging.error(error_msg)
             QMessageBox.critical(self, "Ошибка генерации КП", error_msg)
 
+    def preview_commercial_offer_pdf(self):
+        company_data = self.load_company_settings()
+
+        image_a = self.side_a_editor.get_framed_image()
+        image_b = self.side_b_editor.get_framed_image()
+
+        if not image_a and not image_b:
+            QMessageBox.warning(self, "Ошибка", "Нет изображений для генерации КП")
+            return
+
+        order_number = self.order_number.text().strip() or "Б/Н"
+        order_fields = {
+            "customer_name": self.customer_name.text().strip() or "Не указан",
+            "customer_phone": self.customer_phone.text().strip() or "Не указан",
+            "customer_email": self.customer_email.text().strip() or "Не указан",
+            "order_number": order_number,
+            "production_deadline": self.production_deadline.text().strip() or "Не установлен",
+            "company_name": self.company_name.text().strip() or "—",
+            "print_quantity": str(self.print_quantity.value()),
+            "print_type": self.print_type.currentText(),
+            "paper_type": self.paper_type.currentText(),
+            "lamination": self.lamination.currentText(),
+            "additional": self.additional_specs.toPlainText().strip() or "—",
+        }
+
+        try:
+            fd, temp_path = tempfile.mkstemp(suffix=".pdf")
+            os.close(fd)
+            export_commercial_offer_pdf(
+                temp_path,
+                company_data=company_data,
+                order_fields=order_fields,
+                image_a=image_a,
+                image_b=image_b,
+            )
+            os.startfile(temp_path)
+        except Exception as e:
+            error_msg = f"Не удалось создать превью КП: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logging.error(error_msg)
+            QMessageBox.critical(self, "Ошибка превью КП", error_msg)
+
     def export_pdf(self):
         image_a = self.side_a_editor.get_framed_image()
         image_b = self.side_b_editor.get_framed_image()
@@ -803,6 +867,50 @@ class CardPrintingApp(QMainWindow):
             try:
                 export_print_pdf(file_path, image_a, image_b)
                 QMessageBox.information(self, "Успех", f"PDF сохранен: {file_path}")
+            except Exception as e:
+                error_msg = f"Не удалось создать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+                logging.error(error_msg)
+                QMessageBox.critical(self, "Ошибка экспорта PDF", error_msg)
+
+    def export_pdf_side_a(self):
+        image = self.side_a_editor.get_framed_image()
+        if image is None:
+            QMessageBox.warning(self, "Ошибка", "Нет изображения для Стороны А")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Сохранить Сторону А",
+            f"card_side_a_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            "PDF файлы (*.pdf)",
+        )
+
+        if file_path:
+            try:
+                export_print_pdf_single(file_path, image)
+                QMessageBox.information(self, "Успех", f"Сторона А сохранена:\n{file_path}")
+            except Exception as e:
+                error_msg = f"Не удалось создать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+                logging.error(error_msg)
+                QMessageBox.critical(self, "Ошибка экспорта PDF", error_msg)
+
+    def export_pdf_side_b(self):
+        image = self.side_b_editor.get_framed_image()
+        if image is None:
+            QMessageBox.warning(self, "Ошибка", "Нет изображения для Стороны Б")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Сохранить Сторону Б",
+            f"card_side_b_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            "PDF файлы (*.pdf)",
+        )
+
+        if file_path:
+            try:
+                export_print_pdf_single(file_path, image)
+                QMessageBox.information(self, "Успех", f"Сторона Б сохранена:\n{file_path}")
             except Exception as e:
                 error_msg = f"Не удалось создать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
                 logging.error(error_msg)

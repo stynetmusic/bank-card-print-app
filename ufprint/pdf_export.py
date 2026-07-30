@@ -39,6 +39,23 @@ def fit_image_to_box(img_w, img_h, max_w, max_h):
     return final_width, final_height
 
 
+PAGE_W = 87 * mm
+PAGE_H = 56 * mm
+_CARD_ASPECT = PAGE_H / PAGE_W
+
+
+def _img_max(frame_w):
+    return frame_w * 0.95
+
+
+def _img_row_dimensions(image_obj, max_cell_w, cell_aspect):
+    iw, ih = image_obj.size
+    if iw <= 0 or ih <= 0:
+        return max_cell_w, max_cell_w * cell_aspect
+    max_h = max_cell_w * cell_aspect
+    return fit_image_to_box(iw, ih, max_cell_w, max_h)
+
+
 def _find_arial_font():
     candidates = []
     meipass = getattr(sys, "_MEIPASS", None)
@@ -74,10 +91,14 @@ def _pil_to_rl_image(pil_img, width, height):
 
 
 def export_print_pdf(file_path, image_a, image_b):
-    """Export bank-card PDF (87x56mm pages). Images are already-framed PIL Images or None."""
+    """Export bank-card PDF (87x56mm pages). Images are already-framed PIL Images or None.
+
+    Each side is rendered at full card size with no quality-lossy scaling.
+    The PNG data is embedded losslessly into the PDF.
+    """
     doc = SimpleDocTemplate(
         file_path,
-        pagesize=(87 * mm, 56 * mm),
+        pagesize=(PAGE_W, PAGE_H),
         rightMargin=0,
         leftMargin=0,
         topMargin=0,
@@ -85,24 +106,43 @@ def export_print_pdf(file_path, image_a, image_b):
     )
 
     story = []
-    max_width = 230
-    max_height = 140
-
     if image_a is not None:
-        img_w, img_h = image_a.size
-        final_w, final_h = fit_image_to_box(img_w, img_h, max_width, max_height)
-        story.append(_pil_to_rl_image(image_a, final_w, final_h))
+        sw, sh = _img_row_dimensions(image_a, _img_max(PAGE_W), _CARD_ASPECT)
+        story.append(_pil_to_rl_image(image_a, sw, sh))
 
     if image_b is not None:
         if story:
             story.append(PageBreak())
-        img_w, img_h = image_b.size
-        final_w, final_h = fit_image_to_box(img_w, img_h, max_width, max_height)
-        story.append(_pil_to_rl_image(image_b, final_w, final_h))
+        sw, sh = _img_row_dimensions(image_b, _img_max(PAGE_W), _CARD_ASPECT)
+        story.append(_pil_to_rl_image(image_b, sw, sh))
 
     if not story:
         raise ValueError("No images to export")
 
+    doc.build(story)
+    return file_path
+
+
+def export_print_pdf_single(file_path, image):
+    """Export a single card side as a PDF (87x56mm) with full quality.
+
+    The image is embedded as lossless PNG and rendered at the full card size
+    without any intermediate resizing that would degrade detail.
+    """
+    doc = SimpleDocTemplate(
+        file_path,
+        pagesize=(PAGE_W, PAGE_H),
+        rightMargin=0,
+        leftMargin=0,
+        topMargin=0,
+        bottomMargin=0,
+    )
+
+    if image is None:
+        raise ValueError("No image to export")
+
+    sw, sh = _img_row_dimensions(image, _img_max(PAGE_W), _CARD_ASPECT)
+    story = [_pil_to_rl_image(image, sw, sh)]
     doc.build(story)
     return file_path
 
@@ -129,8 +169,16 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
     lamination = order_fields.get("lamination", "")
     additional = order_fields.get("additional", "—")
 
+    left_margin = 30
+    right_margin = 30
+    top_margin = 30
+    bottom_margin = 30
+
+    frame_w = A4[0] - left_margin - right_margin
+
     doc = SimpleDocTemplate(
-        file_path, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30
+        file_path, pagesize=A4, rightMargin=right_margin, leftMargin=left_margin,
+        topMargin=top_margin, bottomMargin=bottom_margin
     )
     styles = getSampleStyleSheet()
     story = []
@@ -158,18 +206,20 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
         leading=14,
     )
 
+    header_col_w = min(100, int(frame_w * 0.22))
+    header_info_w = int(frame_w) - header_col_w
     company_info_text = f"<b>{comp_name}</b><br/>Адрес: {comp_address}<br/>Тел: {comp_phone}"
     header_data = []
     if comp_logo and os.path.exists(comp_logo):
         try:
-            logo_img = Image(comp_logo, width=100, height=50)
+            logo_img = Image(comp_logo, width=header_col_w * 0.6, height=header_col_w * 0.3)
             header_data.append([logo_img, Paragraph(company_info_text, normal_style)])
         except Exception:
             header_data.append(["", Paragraph(company_info_text, normal_style)])
     else:
         header_data.append(["", Paragraph(company_info_text, normal_style)])
 
-    header_table = Table(header_data, colWidths=[120, 420])
+    header_table = Table(header_data, colWidths=[header_col_w, header_info_w])
     header_table.setStyle(
         TableStyle(
             [
@@ -185,6 +235,7 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
     story.append(Paragraph(f"Дата создания: {datetime.now().strftime('%d.%m.%Y')}", normal_style))
     story.append(Spacer(1, 15))
 
+    info_col_w = int(frame_w / 2)
     info_data = [
         [
             Paragraph("<b>Информация о заказчике:</b>", normal_style),
@@ -198,12 +249,12 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
             Paragraph(
                 f"Срок изготовления: {production_deadline}<br/>Компания: {company_name}<br/>"
                 f"Тираж: {print_quantity}<br/>Тип печати: {print_type}<br/>"
-                f"Материал: {paper_type}<br/>Ламинация: {lamination}",
+                f"Материал: {paper_type}<br/>Покрытие: {lamination}",
                 normal_style,
             ),
         ],
     ]
-    info_table = Table(info_data, colWidths=[270, 270])
+    info_table = Table(info_data, colWidths=[info_col_w, info_col_w])
     info_table.setStyle(
         TableStyle(
             [
@@ -220,17 +271,19 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
     story.append(Paragraph("<b>Макет карты (Сторона А и Сторона Б):</b>", normal_style))
     story.append(Spacer(1, 10))
 
-    row_images = []
+    max_cell_w = _img_max(frame_w / 2)
+    rows = []
     for label, image_obj in (("Сторона А", image_a), ("Сторона Б", image_b)):
         if image_obj is not None:
             try:
-                row_images.append(_pil_to_rl_image(image_obj, 240, 150))
+                sw, sh = _img_row_dimensions(image_obj, max_cell_w, _CARD_ASPECT)
+                rows.append(_pil_to_rl_image(image_obj, sw, sh))
             except Exception:
-                row_images.append(Paragraph(f"[Ошибка загрузки {label}]", normal_style))
+                rows.append(Paragraph(f"[Ошибка загрузки {label}]", normal_style))
         else:
-            row_images.append(Paragraph(f"[{label} отсутствует]", normal_style))
+            rows.append(Paragraph(f"[{label} отсутствует]", normal_style))
 
-    images_table = Table([row_images], colWidths=[270, 270])
+    images_table = Table([rows], colWidths=[max_cell_w, max_cell_w])
     images_table.setStyle(
         TableStyle(
             [
