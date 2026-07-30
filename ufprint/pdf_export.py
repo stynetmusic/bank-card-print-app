@@ -38,6 +38,15 @@ def fit_image_to_box(img_w, img_h, max_w, max_h):
         final_width = max_h * aspect_ratio
     return final_width, final_height
 
+
+def _fit_image(pil_img, max_w, max_h):
+    """Return (width, height) scaled to fit inside max_w x max_h, preserving aspect ratio."""
+    iw, ih = pil_img.size
+    if iw <= 0 or ih <= 0:
+        return max_w, max_h
+    return fit_image_to_box(iw, ih, max_w, max_h)
+
+
 PAGE_W = 87 * mm
 PAGE_H = 56 * mm
 
@@ -125,7 +134,8 @@ def export_print_pdf_single(file_path, image):
     if image is None:
         raise ValueError("No image to export")
 
-    story = [_pil_to_rl_image(image, PAGE_W, PAGE_H)]
+    sw, sh = _fit_image(image, PAGE_W, PAGE_H)
+    story = [_pil_to_rl_image(image, sw, sh)]
     doc.build(story)
     return file_path
 
@@ -261,11 +271,8 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
     for label, image_obj in (("Сторона А", image_a), ("Сторона Б", image_b)):
         if image_obj is not None:
             try:
-                iw, ih = image_obj.size
-                scale = min(img_col_w / iw, img_thumb_h / ih, 1.0)
-                row_images.append(
-                    _pil_to_rl_image(image_obj, iw * scale, ih * scale)
-                )
+                sw, sh = _fit_image(image_obj, img_col_w, img_thumb_h)
+                row_images.append(_pil_to_rl_image(image_obj, sw, sh))
             except Exception:
                 row_images.append(Paragraph(f"[Ошибка загрузки {label}]", normal_style))
         else:
