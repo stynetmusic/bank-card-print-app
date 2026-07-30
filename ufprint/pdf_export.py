@@ -39,12 +39,15 @@ def fit_image_to_box(img_w, img_h, max_w, max_h):
     return final_width, final_height
 
 
-def _fit_image(pil_img, max_w, max_h):
-    """Return (width, height) scaled to fit inside max_w x max_h, preserving aspect ratio."""
-    iw, ih = pil_img.size
-    if iw <= 0 or ih <= 0:
-        return max_w, max_h
-    return fit_image_to_box(iw, ih, max_w, max_h)
+def _img_max(frame_w):
+    return frame_w * 0.97
+
+
+def _img_row_dimensions(image_obj, max_cell_w, cell_aspect):
+    iw, ih = image_obj.size
+    max_h = max_cell_w * cell_aspect
+    sw, sh = _fit_image(image_obj, max_cell_w, max_h)
+    return sw, sh
 
 
 PAGE_W = 87 * mm
@@ -102,12 +105,14 @@ def export_print_pdf(file_path, image_a, image_b):
 
     story = []
     if image_a is not None:
-        story.append(_pil_to_rl_image(image_a, PAGE_W, PAGE_H))
+        sw, sh = _fit_image(image_a, _img_max(PAGE_W), _img_max(PAGE_H))
+        story.append(_pil_to_rl_image(image_a, sw, sh))
 
     if image_b is not None:
         if story:
             story.append(PageBreak())
-        story.append(_pil_to_rl_image(image_b, PAGE_W, PAGE_H))
+        sw, sh = _fit_image(image_b, _img_max(PAGE_W), _img_max(PAGE_H))
+        story.append(_pil_to_rl_image(image_b, sw, sh))
 
     if not story:
         raise ValueError("No images to export")
@@ -134,7 +139,7 @@ def export_print_pdf_single(file_path, image):
     if image is None:
         raise ValueError("No image to export")
 
-    sw, sh = _fit_image(image, PAGE_W, PAGE_H)
+    sw, sh = _fit_image(image, _img_max(PAGE_W), _img_max(PAGE_H))
     story = [_pil_to_rl_image(image, sw, sh)]
     doc.build(story)
     return file_path
@@ -264,21 +269,19 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
     story.append(Paragraph("<b>Макет карты (Сторона А и Сторона Б):</b>", normal_style))
     story.append(Spacer(1, 10))
 
-    img_col_w = int(frame_w / 2)
-    img_thumb_h = int(img_col_w * 0.625)
-
-    row_images = []
+    max_cell_w = _img_max(img_col_w)
+    rows = []
     for label, image_obj in (("Сторона А", image_a), ("Сторона Б", image_b)):
         if image_obj is not None:
             try:
-                sw, sh = _fit_image(image_obj, img_col_w, img_thumb_h)
-                row_images.append(_pil_to_rl_image(image_obj, sw, sh))
+                sw, sh = _img_row_dimensions(image_obj, max_cell_w, 0.625)
+                rows.append(_pil_to_rl_image(image_obj, sw, sh))
             except Exception:
-                row_images.append(Paragraph(f"[Ошибка загрузки {label}]", normal_style))
+                rows.append(Paragraph(f"[Ошибка загрузки {label}]", normal_style))
         else:
-            row_images.append(Paragraph(f"[{label} отсутствует]", normal_style))
+            rows.append(Paragraph(f"[{label} отсутствует]", normal_style))
 
-    images_table = Table([row_images], colWidths=[img_col_w, img_col_w])
+    images_table = Table([rows], colWidths=[max_cell_w, max_cell_w])
     images_table.setStyle(
         TableStyle(
             [
