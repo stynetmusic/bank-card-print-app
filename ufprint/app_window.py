@@ -1,6 +1,8 @@
 """Main application window for UF Print."""
 
 import logging
+import os
+import tempfile
 import traceback
 from datetime import datetime
 
@@ -298,6 +300,11 @@ class CardPrintingApp(QMainWindow):
         self.btn_generate_kp.setObjectName("btnPrimary")
         self.btn_generate_kp.clicked.connect(self.generate_commercial_offer_pdf)
         layout.addWidget(self.btn_generate_kp)
+
+        self.btn_preview_kp = QPushButton("Просмотр КП")
+        self.btn_preview_kp.setObjectName("btnPreview")
+        self.btn_preview_kp.clicked.connect(self.preview_commercial_offer_pdf)
+        layout.addWidget(self.btn_preview_kp)
 
         self.tab_widget.addTab(customer_tab, "Данные заказа")
 
@@ -783,6 +790,47 @@ class CardPrintingApp(QMainWindow):
             error_msg = f"Не удалось сгенерировать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logging.error(error_msg)
             QMessageBox.critical(self, "Ошибка генерации КП", error_msg)
+
+    def preview_commercial_offer_pdf(self):
+        company_data = self.load_company_settings()
+
+        image_a = self.side_a_editor.get_framed_image()
+        image_b = self.side_b_editor.get_framed_image()
+
+        if not image_a and not image_b:
+            QMessageBox.warning(self, "Ошибка", "Нет изображений для генерации КП")
+            return
+
+        order_number = self.order_number.text().strip() or "Б/Н"
+        order_fields = {
+            "customer_name": self.customer_name.text().strip() or "Не указан",
+            "customer_phone": self.customer_phone.text().strip() or "Не указан",
+            "customer_email": self.customer_email.text().strip() or "Не указан",
+            "order_number": order_number,
+            "production_deadline": self.production_deadline.text().strip() or "Не установлен",
+            "company_name": self.company_name.text().strip() or "—",
+            "print_quantity": str(self.print_quantity.value()),
+            "print_type": self.print_type.currentText(),
+            "paper_type": self.paper_type.currentText(),
+            "lamination": self.lamination.currentText(),
+            "additional": self.additional_specs.toPlainText().strip() or "—",
+        }
+
+        try:
+            fd, temp_path = tempfile.mkstemp(suffix=".pdf")
+            os.close(fd)
+            export_commercial_offer_pdf(
+                temp_path,
+                company_data=company_data,
+                order_fields=order_fields,
+                image_a=image_a,
+                image_b=image_b,
+            )
+            os.startfile(temp_path)
+        except Exception as e:
+            error_msg = f"Не удалось создать превью КП: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logging.error(error_msg)
+            QMessageBox.critical(self, "Ошибка превью КП", error_msg)
 
     def export_pdf(self):
         image_a = self.side_a_editor.get_framed_image()
