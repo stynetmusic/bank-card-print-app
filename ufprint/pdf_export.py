@@ -152,8 +152,16 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
     lamination = order_fields.get("lamination", "")
     additional = order_fields.get("additional", "—")
 
+    left_margin = 30
+    right_margin = 30
+    top_margin = 30
+    bottom_margin = 30
+
+    frame_w = A4[0] - left_margin - right_margin
+
     doc = SimpleDocTemplate(
-        file_path, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30
+        file_path, pagesize=A4, rightMargin=right_margin, leftMargin=left_margin,
+        topMargin=top_margin, bottomMargin=bottom_margin
     )
     styles = getSampleStyleSheet()
     story = []
@@ -181,18 +189,20 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
         leading=14,
     )
 
+    header_col_w = min(100, int(frame_w * 0.22))
+    header_info_w = int(frame_w) - header_col_w
     company_info_text = f"<b>{comp_name}</b><br/>Адрес: {comp_address}<br/>Тел: {comp_phone}"
     header_data = []
     if comp_logo and os.path.exists(comp_logo):
         try:
-            logo_img = Image(comp_logo, width=100, height=50)
+            logo_img = Image(comp_logo, width=header_col_w * 0.6, height=header_col_w * 0.3)
             header_data.append([logo_img, Paragraph(company_info_text, normal_style)])
         except Exception:
             header_data.append(["", Paragraph(company_info_text, normal_style)])
     else:
         header_data.append(["", Paragraph(company_info_text, normal_style)])
 
-    header_table = Table(header_data, colWidths=[120, 420])
+    header_table = Table(header_data, colWidths=[header_col_w, header_info_w])
     header_table.setStyle(
         TableStyle(
             [
@@ -208,6 +218,7 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
     story.append(Paragraph(f"Дата создания: {datetime.now().strftime('%d.%m.%Y')}", normal_style))
     story.append(Spacer(1, 15))
 
+    info_col_w = int(frame_w / 2)
     info_data = [
         [
             Paragraph("<b>Информация о заказчике:</b>", normal_style),
@@ -221,12 +232,12 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
             Paragraph(
                 f"Срок изготовления: {production_deadline}<br/>Компания: {company_name}<br/>"
                 f"Тираж: {print_quantity}<br/>Тип печати: {print_type}<br/>"
-                f"Материал: {paper_type}<br/>Ламинация: {lamination}",
+                f"Материал: {paper_type}<br/>Покрытие: {lamination}",
                 normal_style,
             ),
         ],
     ]
-    info_table = Table(info_data, colWidths=[270, 270])
+    info_table = Table(info_data, colWidths=[info_col_w, info_col_w])
     info_table.setStyle(
         TableStyle(
             [
@@ -243,17 +254,24 @@ def export_commercial_offer_pdf(file_path, *, company_data, order_fields, image_
     story.append(Paragraph("<b>Макет карты (Сторона А и Сторона Б):</b>", normal_style))
     story.append(Spacer(1, 10))
 
+    img_col_w = int(frame_w / 2)
+    img_thumb_h = int(img_col_w * 0.625)
+
     row_images = []
     for label, image_obj in (("Сторона А", image_a), ("Сторона Б", image_b)):
         if image_obj is not None:
             try:
-                row_images.append(_pil_to_rl_image(image_obj, 240, 150))
+                iw, ih = image_obj.size
+                scale = min(img_col_w / iw, img_thumb_h / ih, 1.0)
+                row_images.append(
+                    _pil_to_rl_image(image_obj, iw * scale, ih * scale)
+                )
             except Exception:
                 row_images.append(Paragraph(f"[Ошибка загрузки {label}]", normal_style))
         else:
             row_images.append(Paragraph(f"[{label} отсутствует]", normal_style))
 
-    images_table = Table([row_images], colWidths=[270, 270])
+    images_table = Table([row_images], colWidths=[img_col_w, img_col_w])
     images_table.setStyle(
         TableStyle(
             [
