@@ -45,9 +45,10 @@ def _img_max(frame_w):
 
 def _img_row_dimensions(image_obj, max_cell_w, cell_aspect):
     iw, ih = image_obj.size
+    if iw <= 0 or ih <= 0:
+        return max_cell_w, max_cell_w * cell_aspect
     max_h = max_cell_w * cell_aspect
-    sw, sh = _fit_image(image_obj, max_cell_w, max_h)
-    return sw, sh
+    return fit_image_to_box(iw, ih, max_cell_w, max_h)
 
 
 PAGE_W = 87 * mm
@@ -105,13 +106,13 @@ def export_print_pdf(file_path, image_a, image_b):
 
     story = []
     if image_a is not None:
-        sw, sh = _fit_image(image_a, _img_max(PAGE_W), _img_max(PAGE_H))
+        sw, sh = _img_row_dimensions(image_a, _img_max(PAGE_W), _img_max(PAGE_H) / _img_max(PAGE_W))
         story.append(_pil_to_rl_image(image_a, sw, sh))
 
     if image_b is not None:
         if story:
             story.append(PageBreak())
-        sw, sh = _fit_image(image_b, _img_max(PAGE_W), _img_max(PAGE_H))
+        sw, sh = _img_row_dimensions(image_b, _img_max(PAGE_W), _img_max(PAGE_H) / _img_max(PAGE_W))
         story.append(_pil_to_rl_image(image_b, sw, sh))
 
     if not story:
@@ -139,7 +140,7 @@ def export_print_pdf_single(file_path, image):
     if image is None:
         raise ValueError("No image to export")
 
-    sw, sh = _fit_image(image, _img_max(PAGE_W), _img_max(PAGE_H))
+    sw, sh = _img_row_dimensions(image, _img_max(PAGE_W), _img_max(PAGE_H) / _img_max(PAGE_W))
     story = [_pil_to_rl_image(image, sw, sh)]
     doc.build(story)
     return file_path
