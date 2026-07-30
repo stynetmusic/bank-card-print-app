@@ -35,6 +35,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from ufprint.color_dialog import ColorSettingsDialog
 from ufprint import company_config
 from ufprint import orders
 from ufprint.editor import ImageEditor
@@ -220,6 +221,10 @@ class CardPrintingApp(QMainWindow):
         cmyk_layout.addRow("K (Black):", self.k_slider)
 
         layout.addWidget(cmyk_group)
+
+        color_settings_btn = QPushButton("Настройки цвета")
+        color_settings_btn.clicked.connect(self.open_color_settings)
+        layout.addWidget(color_settings_btn)
 
         reset_btn = QPushButton("Сбросить изображение")
         reset_btn.clicked.connect(self.reset_current_image)
@@ -546,6 +551,10 @@ class CardPrintingApp(QMainWindow):
 
         for editor in self.active_editors():
             editor.apply_cmyk_color(c, m, y, k)
+
+    def open_color_settings(self):
+        dialog = ColorSettingsDialog(self)
+        dialog.exec()
 
     def apply_zoom(self, factor):
         for editor in self.active_editors():
