@@ -259,9 +259,6 @@ class CardPrintingApp(QMainWindow):
         self.company_name = QLineEdit()
         company_layout.addRow("Название компании:", self.company_name)
 
-        self.customer_contact_person = QLineEdit()
-        company_layout.addRow("Заказчик:", self.customer_contact_person)
-
         self.order_number = QLineEdit()
         company_layout.addRow("Номер заказа:", self.order_number)
 
@@ -282,8 +279,8 @@ class CardPrintingApp(QMainWindow):
         company_layout.addRow("Материал:", self.paper_type)
 
         self.lamination = QComboBox()
-        self.lamination.addItems(["Без ламинации", "Матовая", "Глянцевая", "Soft Touch"])
-        company_layout.addRow("Ламинация:", self.lamination)
+        self.lamination.addItems(["Без лака", "Матовый", "Глянцевый"])
+        company_layout.addRow("Лак:", self.lamination)
 
         self.additional_specs = QTextEdit()
         self.additional_specs.setMaximumHeight(100)
@@ -675,7 +672,6 @@ class CardPrintingApp(QMainWindow):
             "paper_type": self.paper_type.currentText(),
             "lamination": self.lamination.currentText(),
             "additional": self.additional_specs.toPlainText(),
-            "customer_contact": self.customer_contact_person.text().strip(),
             "order_number": self.order_number.text().strip(),
             "production_deadline": self.production_deadline.text().strip(),
         }
@@ -729,9 +725,8 @@ class CardPrintingApp(QMainWindow):
             self.print_quantity.setValue(specs.get("quantity", 100))
             self.print_type.setCurrentText(specs.get("print_type", "Цифровая печать"))
             self.paper_type.setCurrentText(specs.get("paper_type", "Пластик PVC"))
-            self.lamination.setCurrentText(specs.get("lamination", "Без ламинации"))
+            self.lamination.setCurrentText(specs.get("lamination", "Без лака"))
             self.additional_specs.setText(specs.get("additional", ""))
-            self.customer_contact_person.setText(specs.get("customer_contact", ""))
             self.order_number.setText(specs.get("order_number", ""))
             self.production_deadline.setText(specs.get("production_deadline", ""))
 
