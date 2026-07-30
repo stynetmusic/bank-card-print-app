@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UF Print — UI Design Previews</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: #e8ecf0; padding: 40px 30px; color: #333; }
+  h1 { text-align: center; font-size: 26px; font-weight: 700; margin-bottom: 8px; color: #1a1a1a; }
+  .subtitle { text-align: center; font-size: 13px; color: #888; margin-bottom: 40px; }
+  .variants { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; }
+  .variant { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .variant-label { font-size: 14px; font-weight: 600; color: #444; text-align: center; }
+  .w { background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); overflow: hidden; border: 1px solid #d8d8d8; }
+  .w-titlebar { height: 32px; background: #1a1a1a; display: flex; align-items: center; padding: 0 12px; gap: 7px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #28c940; }
+  .w-title { flex: 1; text-align: center; color: #ccc; font-size: 11px; letter-spacing: 0.3px; }
+  .w-body { padding: 14px; min-height: 260px; position: relative; }
+
+  /* V1 */
+  .v1 .w { width: 340px; }
+  .v1 .sel { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 7px 10px; font-size: 11px; margin-bottom: 8px; color: #333; display: flex; justify-content: space-between; align-items: center; }
+  .v1 .sel::after { content: '▾'; color: #999; font-size: 10px; }
+  .v1 .status { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 6px 10px; font-size: 11px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .v1 .led { width: 8px; height: 8px; border-radius: 50%; background: #28c940; display: inline-block; }
+  .v1 .print-btn { background: #0066cc; color: #fff; border: none; border-radius: 10px; padding: 14px 0; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; width: 100%; letter-spacing: 0.5px; }
+  .v1 .print-btn:hover { background: #0050a0; }
+  .v1 .tray-row { display: flex; gap: 7px; margin-top: 10px; }
+  .v1 .tray { flex: 1; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 6px 0; text-align: center; font-size: 10px; color: #555; cursor: pointer; }
+  .v1 .tray:hover { border-color: #0066cc; color: #0066cc; }
+  .v1 .preview { background: #fafafa; border: 1px solid #ddd; border-radius: 4px; padding: 6px; margin-top: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .v1 .card-sim { width: 65%; height: 30px; background: linear-gradient(135deg, #e8f0fe, #d0e0fa); border-radius: 3px; border: 1px solid #b8d0f8; display: flex; align-items: center; justify-content: center; font-size: 7px; color: #888; }
+  .v1 .log { margin-top: 8px; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; padding: 5px 7px; font-size: 9px; color: #aaa; max-height: 38px; overflow: hidden; }
+
+  /* V2 */
+  .v2 .w { width: 560px; }
+  .v2 .body { display: flex; min-height: 220px; }
+  .v2 .sidebar { width: 210px; background: #fafafa; border-right: 1px solid #e8e8e8; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .v2 .main { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .v2 .field { background: #fff; border: 1px solid #ddd; border-radius: 5px; padding: 6px 9px; font-size: 10px; color: #333; }
+  .v2 .field-label { font-size: 9px; color: #999; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .v2 .radio-row { display: flex; gap: 6px; }
+  .v2 .radio { flex: 1; background: #fff; border: 1px solid #ddd; border-radius: 5px; padding: 5px 8px; font-size: 10px; cursor: pointer; text-align: center; }
+  .v2 .radio.active { border-color: #0066cc; background: #f0f4ff; color: #0066cc; }
+  .v2 .print-btn-v2 { background: #0066cc; color: #fff; border: none; border-radius: 8px; padding: 10px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; margin-top: auto; }
+  .v2 .card-preview { flex: 1; background: #fafafa; border: 1px solid #ddd; border-radius: 5px; display: flex; gap: 8px; padding: 8px; align-items: center; }
+  .v2 .card-slot { flex: 1; background: #fff; border: 1px solid #e0e0e0; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 6px; font-size: 9px; color: #888; }
+  .v2 .card-slot .card { width: 70%; height: 22px; background: linear-gradient(135deg, #e8f0fe, #d0e0fa); border-radius: 2px; border: 1px solid #b8d0f8; margin-bottom: 4px; }
+  .v2 .log-v2 { background: #1e1e1e; border-radius: 5px; padding: 6px 8px; font-size: 9px; color: #6ee76e; font-family: 'Consolas', monospace; max-height: 70px; overflow: hidden; line-height: 1.5; }
+  .v2 .log-v2 .ts { color: #555; }
+
+  /* V3 */
+  .v3 .w { width: 600px; }
+  .v3 .topbar { display: flex; align-items: center; padding: 0 12px; height: 36px; background: #fff; border-bottom: 1px solid #e8e8e8; }
+  .v3 .brand { font-size: 13px; font-weight: 700; color: #0066cc; letter-spacing: 0.3px; flex: 1; }
+  .v3 .tabs { display: flex; gap: 2px; }
+  .v3 .tab { padding: 5px 14px; font-size: 10px; border-radius: 6px; cursor: pointer; color: #888; }
+  .v3 .tab.active { background: #0066cc; color: #fff; }
+  .v3 .avatar { width: 26px; height: 26px; background: #e0e7f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #666; cursor: pointer; }
+  .v3 .dash-body { display: flex; padding: 14px; gap: 12px; }
+  .v3 .preview-panel { flex: 1; background: #f8f9fa; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .v3 .preview-label { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+  .v3 .card-big { width: 55%; height: 70px; background: linear-gradient(135deg, #e8f0fe 0%, #c8ddf8 100%); border-radius: 5px; border: 1.5px solid #a0c0e8; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #777; }
+  .v3 .side-previews { display: flex; gap: 8px; width: 100%; justify-content: center; }
+  .v3 .side-p { flex: 1; background: #fff; border: 1px solid #e0e0e0; border-radius: 5px; padding: 6px; text-align: center; font-size: 9px; color: #888; }
+  .v3 .side-p .card { width: 80%; height: 16px; background: linear-gradient(135deg, #e8f0fe, #d0e0fa); border-radius: 2px; border: 1px solid #b8d0f8; margin: 0 auto 4px; }
+  .v3 .presets { width: 200px; display: flex; flex-direction: column; gap: 6px; }
+  .v3 .preset { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 9px 11px; font-size: 10px; cursor: pointer; color: #333; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; }
+  .v3 .preset:hover { border-color: #0066cc; background: #f0f4ff; }
+  .v3 .preset.active { border-color: #0066cc; background: #e8f0fe; }
+  .v3 .preset-badge { font-size: 8px; padding: 2px 6px; border-radius: 8px; background: #e8e8e8; color: #666; }
+  .v3 .preset-badge.recommended { background: #0066cc; color: #fff; }
+  .v3 .quick-print { background: #0066cc; color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 11px; font-weight: 700; cursor: pointer; text-align: center; margin-top: auto; }
+  .v3 .quick-print:hover { background: #0050a0; }
+  .v3 .stats { display: flex; gap: 8px; padding: 10px 14px 14px; }
+  .v3 .stat { flex: 1; background: #f8f9fa; border-radius: 7px; padding: 7px 9px; font-size: 9px; color: #666; display: flex; align-items: center; gap: 5px; }
+  .v3 .stat .val { font-size: 11px; font-weight: 600; color: #333; }
+
+  /* Shared: status bar */
+  .statusbar { height: 26px; background: #f5f5f5; border-top: 1px solid #e0e0e0; display: flex; align-items: center; padding: 0 12px; font-size: 9px; color: #aaa; justify-content: space-between; }
+  .statusbar .sep { margin: 0 6px; color: #ccc; }
+</style>
+</head>
+<body>
+
+<h1>UF Print — Design Variants</h1>
+<p class="subtitle">Сравнение трёх подходов к интерфейсу печати банковских карт</p>
+
+<div class="variants">
+
+  <!-- ======== VARIANT 1: Compact ======== -->
+  <div class="variant">
+    <div class="variant-label">① Compact / Tray Utility</div>
+    <div class="w v1">
+      <div class="w-titlebar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="w-title">UF Print</div>
+      </div>
+      <div class="w-body">
+        <div class="sel">🖨 Printer: HP LaserJet Pro M404dn ▾</div>
+        <div class="status"><span class="led"></span> Ready to print</div>
+        <div class="print-btn">▸  ПЕЧАТЬ</div>
+        <div class="tray-row">
+          <div class="tray">📄 Сторона А</div>
+          <div class="tray">📄 Сторона Б</div>
+          <div class="tray">📄 Обе</div>
+        </div>
+        <div class="preview">
+          <div class="card-sim">87 × 56 мм</div>
+        </div>
+        <div class="log">• Ожидание действий…</div>
+      </div>
+      <div class="statusbar"><span>Готово</span><span>UF Print v1.0</span></div>
+    </div>
+  </div>
+
+  <!-- ======== VARIANT 2: Classic Window ======== -->
+  <div class="variant">
+    <div class="variant-label">② Classic Window</div>
+    <div class="w v2">
+      <div class="w-titlebar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="w-title">UF Print — Печать банковских карт</div>
+      </div>
+      <div class="body">
+        <div class="sidebar">
+          <div><div class="field-label">Printer</div><div class="field">🖨 HP LaserJet Pro M404dn ▾</div></div>
+          <div><div class="field-label">Сторона</div><div class="radio-row">
+            <div class="radio active">◉ А</div>
+            <div class="radio">○ Б</div>
+          </div></div>
+          <div><div class="field-label">Ориентация</div><div class="field">Альбомная ▾</div></div>
+          <div><div class="field-label">Поля (мм)</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              <div class="field" style="flex:0 0 45%">L: 30</div>
+              <div class="field" style="flex:0 0 45%">R: 30</div>
+              <div class="field" style="flex:0 0 45%">T: 30</div>
+              <div class="field" style="flex:0 0 45%">B: 30</div>
+            </div>
+          </div>
+          <div><div class="field-label">Копии</div><div class="field">1 &nbsp; [ − ] &nbsp; [ + ]</div></div>
+          <div class="print-btn-v2">▸ ПЕЧАТЬ</div>
+        </div>
+        <div class="main">
+          <div class="card-preview">
+            <div class="card-slot"><div class="card"></div>Сторона А</div>
+            <div class="card-slot"><div class="card"></div>Сторона Б</div>
+          </div>
+          <div style="font-size:9px;color:#aaa;text-align:center">87 × 56 мм • Формат карты</div>
+          <div class="log-v2">
+            <span class="ts">[12:00:01]</span> Приложение запущено<br>
+            <span class="ts">[12:00:02]</span> Ожидание загрузки изображений…
+          </div>
+        </div>
+      </div>
+      <div class="statusbar"><span>Готово</span><span>UF Print v1.0</span><span>10:24:36</span></div>
+    </div>
+  </div>
+
+  <!-- ======== VARIANT 3: Dashboard ======== -->
+  <div class="variant">
+    <div class="variant-label">③ Dashboard / Modern</div>
+    <div class="w v3">
+      <div class="topbar">
+        <div class="brand">UF Print ⬡</div>
+        <div class="tabs">
+          <div class="tab active">Печать</div>
+          <div class="tab">Настройки</div>
+          <div class="tab">История</div>
+        </div>
+        <div class="avatar">👤</div>
+      </div>
+      <div class="dash-body">
+        <div class="preview-panel">
+          <div class="preview-label">Превью документа</div>
+          <div class="card-big">87 × 56 мм</div>
+          <div class="side-previews">
+            <div class="side-p"><div class="card"></div>Сторона А</div>
+            <div class="side-p"><div class="card"></div>Сторона Б</div>
+          </div>
+        </div>
+        <div class="presets">
+          <div class="field-label" style="margin-bottom:4px">Быстрые пресеты</div>
+          <div class="preset">📄 Одиночная: Сторона А <span class="preset-badge">Быстро</span></div>
+          <div class="preset">📄 Одиночная: Сторона Б <span class="preset-badge">Быстро</span></div>
+          <div class="preset active">📑 Двусторонняя: А + Б <span class="preset-badge recommended">Рекомендуется</span></div>
+          <div class="quick-print">▸ Печать по пресету</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">🖨 <span class="val">HP M404dn</span></div>
+        <div class="stat">📄 <span class="val">Готов</span></div>
+        <div class="stat">📁 <span class="val">card_001.pdf</span></div>
+        <div class="stat">⏱ <span class="val">~30 сек</span></div>
+      </div>
+      <div class="statusbar"><span>Готово</span><span>UF Print v1.0</span><span>10:24:36</span></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
