@@ -38,6 +38,9 @@ def fit_image_to_box(img_w, img_h, max_w, max_h):
         final_width = max_h * aspect_ratio
     return final_width, final_height
 
+PAGE_W = 87 * mm
+PAGE_H = 56 * mm
+
 
 def _find_arial_font():
     candidates = []
@@ -74,10 +77,14 @@ def _pil_to_rl_image(pil_img, width, height):
 
 
 def export_print_pdf(file_path, image_a, image_b):
-    """Export bank-card PDF (87x56mm pages). Images are already-framed PIL Images or None."""
+    """Export bank-card PDF (87x56mm pages). Images are already-framed PIL Images or None.
+
+    Each side is rendered at full card size with no quality-lossy scaling.
+    The PNG data is embedded losslessly into the PDF.
+    """
     doc = SimpleDocTemplate(
         file_path,
-        pagesize=(87 * mm, 56 * mm),
+        pagesize=(PAGE_W, PAGE_H),
         rightMargin=0,
         leftMargin=0,
         topMargin=0,
@@ -85,24 +92,40 @@ def export_print_pdf(file_path, image_a, image_b):
     )
 
     story = []
-    max_width = 230
-    max_height = 140
-
     if image_a is not None:
-        img_w, img_h = image_a.size
-        final_w, final_h = fit_image_to_box(img_w, img_h, max_width, max_height)
-        story.append(_pil_to_rl_image(image_a, final_w, final_h))
+        story.append(_pil_to_rl_image(image_a, PAGE_W, PAGE_H))
 
     if image_b is not None:
         if story:
             story.append(PageBreak())
-        img_w, img_h = image_b.size
-        final_w, final_h = fit_image_to_box(img_w, img_h, max_width, max_height)
-        story.append(_pil_to_rl_image(image_b, final_w, final_h))
+        story.append(_pil_to_rl_image(image_b, PAGE_W, PAGE_H))
 
     if not story:
         raise ValueError("No images to export")
 
+    doc.build(story)
+    return file_path
+
+
+def export_print_pdf_single(file_path, image):
+    """Export a single card side as a PDF (87x56mm) with full quality.
+
+    The image is embedded as lossless PNG and rendered at the full card size
+    without any intermediate resizing that would degrade detail.
+    """
+    doc = SimpleDocTemplate(
+        file_path,
+        pagesize=(PAGE_W, PAGE_H),
+        rightMargin=0,
+        leftMargin=0,
+        topMargin=0,
+        bottomMargin=0,
+    )
+
+    if image is None:
+        raise ValueError("No image to export")
+
+    story = [_pil_to_rl_image(image, PAGE_W, PAGE_H)]
     doc.build(story)
     return file_path
 

@@ -40,7 +40,11 @@ from ufprint import company_config
 from ufprint import orders
 from ufprint.editor import ImageEditor
 from ufprint.paths import normalize_path
-from ufprint.pdf_export import export_commercial_offer_pdf, export_print_pdf
+from ufprint.pdf_export import (
+    export_commercial_offer_pdf,
+    export_print_pdf,
+    export_print_pdf_single,
+)
 from ufprint.styles import APP_STYLESHEET
 
 
@@ -297,6 +301,14 @@ class CardPrintingApp(QMainWindow):
         export_btn = QPushButton("Экспорт в PDF (для печати)")
         export_btn.clicked.connect(self.export_pdf)
         layout.addWidget(export_btn)
+
+        self.btn_export_a = QPushButton("Сторона А")
+        self.btn_export_a.clicked.connect(self.export_pdf_side_a)
+        layout.addWidget(self.btn_export_a)
+
+        self.btn_export_b = QPushButton("Сторона Б")
+        self.btn_export_b.clicked.connect(self.export_pdf_side_b)
+        layout.addWidget(self.btn_export_b)
 
         self.btn_generate_kp = QPushButton("Сформировать КП в PDF")
         self.btn_generate_kp.setObjectName("btnPrimary")
@@ -851,10 +863,54 @@ class CardPrintingApp(QMainWindow):
             "PDF файлы (*.pdf)",
         )
 
+         if file_path:
+             try:
+                 export_print_pdf(file_path, image_a, image_b)
+                 QMessageBox.information(self, "Успех", f"PDF сохранен: {file_path}")
+             except Exception as e:
+                 error_msg = f"Не удалось создать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+                 logging.error(error_msg)
+                 QMessageBox.critical(self, "Ошибка экспорта PDF", error_msg)
+
+    def export_pdf_side_a(self):
+        image = self.side_a_editor.get_framed_image()
+        if image is None:
+            QMessageBox.warning(self, "Ошибка", "Нет изображения для Стороны А")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Сохранить Сторону А",
+            f"card_side_a_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            "PDF файлы (*.pdf)",
+        )
+
         if file_path:
             try:
-                export_print_pdf(file_path, image_a, image_b)
-                QMessageBox.information(self, "Успех", f"PDF сохранен: {file_path}")
+                export_print_pdf_single(file_path, image)
+                QMessageBox.information(self, "Успех", f"Сторона А сохранена:\n{file_path}")
+            except Exception as e:
+                error_msg = f"Не удалось создать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+                logging.error(error_msg)
+                QMessageBox.critical(self, "Ошибка экспорта PDF", error_msg)
+
+    def export_pdf_side_b(self):
+        image = self.side_b_editor.get_framed_image()
+        if image is None:
+            QMessageBox.warning(self, "Ошибка", "Нет изображения для Стороны Б")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Сохранить Сторону Б",
+            f"card_side_b_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            "PDF файлы (*.pdf)",
+        )
+
+        if file_path:
+            try:
+                export_print_pdf_single(file_path, image)
+                QMessageBox.information(self, "Успех", f"Сторона Б сохранена:\n{file_path}")
             except Exception as e:
                 error_msg = f"Не удалось создать PDF: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
                 logging.error(error_msg)
