@@ -80,15 +80,77 @@
   .v3 .stat { flex: 1; background: #f8f9fa; border-radius: 7px; padding: 7px 9px; font-size: 9px; color: #666; display: flex; align-items: center; gap: 5px; }
   .v3 .stat .val { font-size: 11px; font-weight: 600; color: #333; }
 
-  /* Shared: status bar */
-  .statusbar { height: 26px; background: #f5f5f5; border-top: 1px solid #e0e0e0; display: flex; align-items: center; padding: 0 12px; font-size: 9px; color: #aaa; justify-content: space-between; }
-  .statusbar .sep { margin: 0 6px; color: #ccc; }
+/* Shared: status bar */
+.statusbar { height: 26px; background: #f5f5f5; border-top: 1px solid #e0e0e0; display: flex; align-items: center; padding: 0 12px; font-size: 9px; color: #aaa; justify-content: space-between; }
+.statusbar .sep { margin: 0 6px; color: #ccc; }
+
+/* V4 */
+.v4 .w { width: 420px; background: #1e1e2e; border-color: #313244; }
+.v4 .w-titlebar { background: #181825; }
+.v4 .w-title { color: #cdd6f4; }
+.v4 .dot-r { background: #f38ba8; }
+.v4 .dot-y { background: #f9e2af; }
+.v4 .dot-g { background: #a6e3a1; }
+.v4 .w-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.v4 .field-v4 { background: #313244; border: 1px solid #45475a; border-radius: 6px; padding: 7px 10px; font-size: 11px; color: #cdd6f4; display: flex; justify-content: space-between; align-items: center; }
+.v4 .field-v4::after { content: '▾'; color: #6c7086; font-size: 10px; }
+.v4 .status-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #a6e3a1; }
+.v4 .led-d { width: 8px; height: 8px; border-radius: 50%; background: #a6e3a1; display: inline-block; box-shadow: 0 0 6px #a6e3a1; }
+.v4 .print-btn-v4 { background: #89b4fa; color: #1e1e2e; border: none; border-radius: 10px; padding: 14px 0; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; width: 100%; letter-spacing: 0.5px; }
+.v4 .print-btn-v4:hover { background: #74c7ec; }
+.v4 .tray-row-v4 { display: flex; gap: 7px; }
+.v4 .tray-v4 { flex: 1; background: #313244; border: 1px solid #45475a; border-radius: 6px; padding: 6px 0; text-align: center; font-size: 10px; color: #cdd6f4; cursor: pointer; }
+.v4 .tray-v4:hover { border-color: #89b4fa; color: #89b4fa; }
+.v4 .tray-v4.selected { border-color: #89b4fa; background: #45475a; color: #89b4fa; }
+.v4 .preview-v4 { background: #181825; border: 1px solid #313244; border-radius: 4px; padding: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; }
+.v4 .card-sim-v4 { width: 65%; height: 30px; background: linear-gradient(135deg, #1e1e2e, #313244); border-radius: 3px; border: 1px solid #45475a; display: flex; align-items: center; justify-content: center; font-size: 7px; color: #6c7086; }
+.v4 .log-v4 { background: #11111b; border: 1px solid #313244; border-radius: 4px; padding: 5px 7px; font-size: 9px; color: #6c7086; max-height: 36px; overflow: hidden; }
+.v4 .statusbar-v4 { background: #181825; border-top: 1px solid #313244; }
+.v4 .statusbar-v4 span { color: #6c7086; }
+
+/* V5 */
+.v5 .w { width: 720px; }
+.v5 .topbar-v5 { display: flex; align-items: center; background: #fafafa; border-bottom: 1px solid #e0e0e0; padding: 0 14px; height: 40px; }
+.v5 .brand-v5 { font-size: 13px; font-weight: 700; color: #0066cc; flex: 1; }
+.v5 .tabs-v5 { display: flex; gap: 2px; }
+.v5 .tab-v5 { padding: 6px 16px; font-size: 10px; border-radius: 6px; cursor: pointer; color: #888; transition: all 0.15s; }
+.v5 .tab-v5.active { background: #0066cc; color: #fff; }
+.v5 .tab-v5:hover:not(.active) { background: #f0f0f0; }
+.v5 .action-btn { background: #0066cc; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 10px; font-weight: 600; cursor: pointer; margin-left: 8px; }
+.v5 .action-btn:hover { background: #0050a0; }
+.v5 .dash-body-v5 { display: flex; padding: 14px; gap: 14px; min-height: 200px; }
+.v5 .main-v5 { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.v5 .preview-panel-v5 { background: #f8f9fa; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; border: 1px solid #e0e0e0; }
+.v5 .preview-label-v5 { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+.v5 .card-big-v5 { width: 60%; height: 65px; background: linear-gradient(135deg, #e8f0fe 0%, #c8ddf8 100%); border-radius: 5px; border: 1.5px solid #a0c0e8; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #777; }
+.v5 .side-previews-v5 { display: flex; gap: 8px; width: 100%; justify-content: center; }
+.v5 .side-p-v5 { flex: 1; background: #fff; border: 1px solid #e0e0e0; border-radius: 5px; padding: 6px; text-align: center; font-size: 9px; color: #888; }
+.v5 .side-p-v5 .card { width: 80%; height: 15px; background: linear-gradient(135deg, #e8f0fe, #d0e0fa); border-radius: 2px; border: 1px solid #b8d0f8; margin: 0 auto 4px; }
+.v5 .job-list { flex: 1; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.v5 .job-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: #f8f9fa; border-radius: 6px; font-size: 10px; }
+.v5 .job-item .check { width: 16px; height: 16px; border: 2px solid #d0d0d0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; flex-shrink: 0; }
+.v5 .job-item .check.checked { background: #0066cc; border-color: #0066cc; }
+.v5 .job-item .badge { font-size: 7px; padding: 1px 5px; border-radius: 6px; background: #e8f0fe; color: #0066cc; margin-left: auto; }
+.v5 .job-item .badge.done { background: #e6f9ee; color: #1aad3f; }
+.v5 .job-item .badge.pending { background: #fff3e0; color: #e67e22; }
+.v5 .batch-controls { display: flex; gap: 8px; margin-top: auto; }
+.v5 .batch-btn { flex: 1; border: none; border-radius: 8px; padding: 9px; font-size: 10px; font-weight: 600; cursor: pointer; text-align: center; }
+.v5 .batch-btn.primary { background: #0066cc; color: #fff; }
+.v5 .batch-btn.primary:hover { background: #0050a0; }
+.v5 .batch-btn.secondary { background: #f0f0f0; color: #333; border: 1px solid #ddd; }
+.v5 .batch-btn.secondary:hover { background: #e0e0e0; }
+.v5 .progress-bar { width: 100%; height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.v5 .progress-fill { width: 65%; height: 100%; background: #0066cc; border-radius: 2px; }
+.v5 .stats-v5 { display: flex; gap: 8px; padding: 10px 14px 14px; }
+.v5 .stat-v5 { flex: 1; background: #fff; border: 1px solid #e8e8e8; border-radius: 7px; padding: 7px 9px; font-size: 9px; color: #666; display: flex; align-items: center; gap: 5px; }
+.v5 .stat-v5 .val { font-size: 11px; font-weight: 600; color: #333; }
+.v5 .statusbar-v5 { background: #f5f5f5; border-top: 1px solid #e0e0e0; }
 </style>
 </head>
 <body>
 
 <h1>UF Print — Design Variants</h1>
-<p class="subtitle">Сравнение трёх подходов к интерфейсу печати банковских карт</p>
+<p class="subtitle">Сравнение пяти подходов к интерфейсу печати банковских карт</p>
 
 <div class="variants">
 
@@ -198,6 +260,85 @@
         <div class="stat">⏱ <span class="val">~30 сек</span></div>
       </div>
       <div class="statusbar"><span>Готово</span><span>UF Print v1.0</span><span>10:24:36</span></div>
+    </div>
+  </div>
+
+  <!-- ======== VARIANT 4: Dark Minimalist ======== -->
+  <div class="variant">
+    <div class="variant-label">④ Dark Minimalist</div>
+    <div class="w v4">
+      <div class="w-titlebar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="w-title">UF Print</div>
+      </div>
+      <div class="w-body">
+        <div class="field-v4">🖨 Printer: HP LaserJet Pro M404dn ▾</div>
+        <div class="status-row"><span class="led-d"></span> Ready to print</div>
+        <div class="print-btn-v4">▸ Печать</div>
+        <div class="tray-row-v4">
+          <div class="tray-v4 selected">Сторона А</div>
+          <div class="tray-v4">Сторона Б</div>
+          <div class="tray-v4">Обе</div>
+        </div>
+        <div class="preview-v4">
+          <div class="card-sim-v4">87 × 56 мм</div>
+        </div>
+        <div class="log-v4">• Готово</div>
+      </div>
+      <div class="statusbar statusbar-v5"><span>Готово</span><span>UF Print v1.0</span></div>
+    </div>
+  </div>
+
+  <!-- ======== VARIANT 5: Batch Tabs ======== -->
+  <div class="variant">
+    <div class="variant-label">⑤ Batch / Tabs</div>
+    <div class="w v5">
+      <div class="w-titlebar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="w-title">UF Print — Batch</div>
+      </div>
+      <div class="topbar-v5">
+        <div class="brand-v5">UF Print ⬡</div>
+        <div class="tabs-v5">
+          <div class="tab-v5">Очередь</div>
+          <div class="tab-v5 active">Печать</div>
+          <div class="tab-v5">История</div>
+          <div class="tab-v5">Настройки</div>
+        </div>
+        <button class="action-btn">Печать всё</button>
+      </div>
+      <div class="dash-body-v5">
+        <div class="main-v5">
+          <div class="preview-panel-v5">
+            <div class="preview-label-v5">Текущий документ</div>
+            <div class="card-big-v5">87 × 56 мм</div>
+            <div class="side-previews-v5">
+              <div class="side-p-v5"><div class="card"></div>Сторона А</div>
+              <div class="side-p-v5"><div class="card"></div>Сторона Б</div>
+            </div>
+          </div>
+        </div>
+        <div class="job-list">
+          <div class="job-item"><div class="check checked">✓</div>card_firma_a.pdf <span class="badge done">Готово</span></div>
+          <div class="job-item"><div class="check checked">✓</div>card_firma_b.pdf <span class="badge done">Готово</span></div>
+          <div class="job-item"><div class="check checked">✓</div>card_client_c.pdf <span class="badge done">Готово</span></div>
+          <div class="job-item"><div class="check"> </div>card_client_d.pdf <span class="badge pending">Очередь</span></div>
+          <div class="job-item"><div class="check"> </div>card_client_e.pdf <span class="badge pending">Очередь</span></div>
+          <div class="job-item"><div class="check"> </div>card_invoice_01.pdf <span class="badge pending">Очередь</span></div>
+          <div class="progress-bar"><div class="progress-fill"></div></div>
+          <div class="batch-controls">
+            <button class="batch-btn secondary">Пауза</button>
+            <button class="batch-btn primary">Продолжить</button>
+          </div>
+        </div>
+      </div>
+      <div class="stats-v5">
+        <div class="stat-v5">🖨 <span class="val">HP M404dn</span></div>
+        <div class="stat-v5">📄 <span class="val">6 задач</span></div>
+        <div class="stat-v5">✅ <span class="val">3 готово</span></div>
+        <div class="stat-v5">⏳ <span class="val">3 ожидание</span></div>
+      </div>
+      <div class="statusbar statusbar-v5"><span>3 / 6 печатано</span><span>UF Print v1.0</span><span>10:30:00</span></div>
     </div>
   </div>
 
